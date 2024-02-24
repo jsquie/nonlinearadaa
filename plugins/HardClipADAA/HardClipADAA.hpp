@@ -4,6 +4,8 @@
 #pragma once
 
 #include "SC_PlugIn.hpp"
+#include "VariableOversampling.hpp"
+#include <array>
 
 namespace HardClipADAA {
 
@@ -13,26 +15,29 @@ public:
     HardClipADAA();
     // Destructor
     ~HardClipADAA();
+    VariableOversampling<> oversample;
+    float m_oversampling_ratio;
 
 private:
     // Calc function
-    void next(int nSamples);
-    inline void coefs(float* c_buff, const int fc);
-    inline void stage_1_filter(int nSamples);
-    inline void stage_2_filter(int nSamples);
-    static const int nTaps = 26;
-    float* coefs_buffer;
-    float* s1_prevs_buf;
-    float* s2_prevs_buf;
-    float* up_sample_buffer;
-    float* us_stage1filtered_buf;
-    float* us_process_buf;
-    float* us_stage2filtered_buf;
-    
-    int s1_prevs_ptr;
-    int s2_prevs_ptr;
+    float next_os(float sig, float gain);
+    void next_aa(int nSamples);
+    float aD1_hard_clip(float sig);
+    float aD2_hard_clip(float sig);
+    float next_adaa(float sig);
+    float calcD(float x0, float x1);
+    float fallback(float x0, float x2);
+    float x1;
+    float x2;
+    const float TOL = 0.0001;
 
-    // Member variables
+    enum InputParams { Sig, Amp, OverSample };
+    enum Outputs { Out1, NumOutputParams };
+
+    float *osBuffer;
+
+    int m_oversamplingIndex{0};
+    
 };
 
 } // namespace HardClipADAA

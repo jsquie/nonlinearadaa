@@ -3,160 +3,108 @@
 
 #include "SC_PlugIn.hpp"
 #include "HardClipADAA.hpp"
-#include <cstring>
-#include <assert.h>
-#include <iostream>
+#include "SC_PlugIn.h"
 
 static InterfaceTable* ft;
 
 namespace HardClipADAA {
 
 HardClipADAA::HardClipADAA() {
-  coefs_buffer = (float*)RTAlloc(mWorld, (nTaps + 1) * sizeof(float));
-  s1_prevs_buf = (float*)RTAlloc(mWorld, (nTaps + 1) * sizeof(float));
-  s2_prevs_buf = (float*)RTAlloc(mWorld, (nTaps + 1) * sizeof(float));
-  up_sample_buffer = (float*)RTAlloc(mWorld, inBufferSize(0) * 2 * sizeof(float));
-  us_stage1filtered_buf = (float*)RTAlloc(mWorld, inBufferSize(0) * 2 * sizeof(float));
-  us_stage2filtered_buf = (float*)RTAlloc(mWorld, inBufferSize(0) * 2 * sizeof(float));
-  us_process_buf = (float*)RTAlloc(mWorld, inBufferSize(0) * 2 * sizeof(float));
-  set_calc_function<HardClipADAA, &HardClipADAA::next>();
+  const float samplerate = (float) sampleRate();
 
+  oversample.reset(samplerate);
+  m_oversamplingIndex = sc_clip((int)in0(OverSample), 0, 4);
+  oversample.setOversamplingIndex(m_oversamplingIndex);
+  osBuffer = oversample.getOSBuffer();
 
-  assert(coefs_buffer != NULL);
-  assert(s1_prevs_buf != NULL);
-  assert(s2_prevs_buf != NULL);
-  assert(up_sample_buffer != NULL);
-  assert(us_stage2filtered_buf != NULL);
-  assert(us_stage1filtered_buf != NULL);
-  assert(us_process_buf != NULL);
+  x1 = 0.0;
+  x2 = 0.0;
 
-  const int fc = 23500;
-
-  // determine coefficient values
-  coefs(coefs_buffer, fc);
-
-  s1_prevs_ptr = 0;
-  s2_prevs_ptr = 0;
-
-  // zero the prevs buf to start
-  memset(s1_prevs_buf, 0.0, (nTaps + 1) * sizeof(float));
-  memset(s2_prevs_buf, 0.0, (nTaps + 1) * sizeof(float));
-
-  std::cout << "Instantiating hard clip" << std::endl;
+  mCalcFunc = make_calc_function<HardClipADAA, &HardClipADAA::next_aa>();
+  next_aa(1);
 }
 
-HardClipADAA::~HardClipADAA() {
-  RTFree(mWorld, coefs_buffer);
-  RTFree(mWorld, s1_prevs_buf);
-  RTFree(mWorld, s2_prevs_buf);
-  RTFree(mWorld, up_sample_buffer);
-  RTFree(mWorld, us_stage1filtered_buf);
-  RTFree(mWorld, us_stage2filtered_buf);
-  RTFree(mWorld, us_process_buf);
-}
+HardClipADAA::~HardClipADAA() {}
 
-inline void HardClipADAA::coefs(float* c_buff, const int fc) {
-  const float normed_cutoff = fc / (sampleRate() * 2.0);
-
-  for (int k = 0; k <= nTaps; ++k) {
-    float k_coef = k - (nTaps * 0.5);
-    float twopik = twopi * k_coef;
-    float pik = pi * k_coef;
-    float lhs = std::sin(twopik * normed_cutoff) / pik; 
-    float rhs = 0.54 + (0.46 * std::cos(twopik / nTaps));
-
-    if (k == nTaps / 2) {
-      c_buff[k] = 2 * normed_cutoff;
+float HardClipADAA::aD1_hard_clip(float sig) {
+  if (std::abs(sig) >= 1.0) {
+    return 0.5 * (sig * sig);
+  } else {
+    if (sig < 0) {
+      return (sig * -1.0) - 0.5;
     } else {
-      c_buff[k] = lhs * rhs;
+      return sig - 0.5;
     }
   }
 }
 
-inline void HardClipADAA::stage_1_filter(int nSamples) {
-  const float* input = in(0);
-  // filter at 23500 hz for sampleRate * 2 
-  for (int i = 0; i < nSamples * 2; ++i) {
-    // a_0 * x(n)
-
-    float sample;
-    // if idx is even, use input
-    // otherwise add 0.0
-    if (i % 2 == 0) {
-      sample = input[i >> 1];
-    } else {
-      sample = 0.0;
-    }
-
-    float a0_samp = sample * coefs_buffer[0];
-
-    float coef_cals = 0.0;
-    // calculate coefs[1..] * prevs[]
-    for (int j = 0; j < nTaps; ++j) {
-      coef_cals += (coefs_buffer[j + 1] * (s1_prevs_buf[(s1_prevs_ptr + j) % (nTaps + 1)]));
-    }
-
-    us_stage1filtered_buf[i] = coef_cals + a0_samp;
-
-    if (s1_prevs_ptr == 0) {
-      s1_prevs_ptr = nTaps;
-    } else {
-      s1_prevs_ptr--;
-    }
-
-    s1_prevs_buf[s1_prevs_ptr] = sample;
+float HardClipADAA::aD2_hard_clip(float sig) {
+  if (std::abs(sig) <= 1.0) {
+    return (1.0 / 6.0) * (sig * sig * sig);
+  } else {
+    float sign = sig <= 0.0 ? -1.0 : 1.0;
+    return (0.5 * (sig * sig) + (1.0 / 6.0)) * sign - (sig * 0.5);
   }
 }
 
-inline void HardClipADAA::stage_2_filter(int nSamples) {
-  // filter at 23500 hz for sampleRate * 2 
-  for (int i = 0; i < nSamples * 2; ++i) {
-    // a_0 * x(n)
-    float sample = us_process_buf[i];
-    float a0_samp = sample * coefs_buffer[0];
+float HardClipADAA::next_adaa(float sig) {
+  float res;
 
-    float coef_cals = 0.0;
-    // calculate coefs[1..] * prevs[]
-    for (int j = 0; j < nTaps; ++j) {
-      coef_cals += (coefs_buffer[j + 1] * (s2_prevs_buf[(s2_prevs_ptr + j) % (nTaps + 1)]));
-    }
+  if (std::abs(sig - x1) < TOL) {
+    res = fallback(sig, x2); 
+  } else {
+    res = (2.0 / (sig - x2)) * (calcD(sig, x1) - calcD(x1, x2)); 
+  }
+  x2 = x1;
+  x1 = sig;
 
-    us_stage2filtered_buf[i] = coef_cals + a0_samp;
+  return res;
+}
 
-    if (s2_prevs_ptr == 0) {
-      s2_prevs_ptr = nTaps;
-    } else {
-      s2_prevs_ptr--;
-    }
-
-    s2_prevs_buf[s2_prevs_ptr] = sample;
+float HardClipADAA::calcD(float x0, float x1) {
+  if (std::abs(x0 - x1) < TOL) {
+    return aD1_hard_clip((x0 + x1) * 0.5);
+  } else {
+    return (aD2_hard_clip(x0) - aD2_hard_clip(x1))/ (x0 - x1);
   }
 }
 
+float HardClipADAA::fallback(float x0, float x2) {
+  float x_bar = (x0 + x2) * 0.5;
+  float delta = x_bar - x0;
 
-void HardClipADAA::next(int nSamples) {
+  if (delta < TOL) {
+    return sc_clip((x_bar + x0) * 0.5, -1.0, 1.0);
+  } else {
+    return (2.0 / delta) * (aD1_hard_clip(x_bar) + (aD2_hard_clip(x0) - aD2_hard_clip(x_bar)) / delta);
+  }
+}
 
-  const float* input = in(0);
-  // Output buffer
-  float* outbuf = out(0);
+float HardClipADAA::next_os(float sig, float amp) {
+  float out;
 
-  // stage_1_filter(nSamples);
+  oversample.upsample(sig);
 
-  // non linear process
+  for (int k = 0; k < m_oversampling_ratio; k++) {
+    osBuffer[k] = next_adaa(osBuffer[k]);
+  }
+  if (m_oversamplingIndex != 0) {
+    out = oversample.downsample();
+  } else {
+    out = osBuffer[0];
+  }
+  return out;
+}
+
+void HardClipADAA::next_aa(int nSamples) {
+  const float *sig = in(Sig);
+  const float *amp = in(Amp);
+
+  float *outbuf = out(Out1);
+
   for (int i = 0; i < nSamples; ++i) {
-    float sample = static_cast<double>(input[i]);
-    double res = std::tanh(sample);
-
-    outbuf[i] = static_cast<float>(res);
+    outbuf[i] = next_os(sig[i], amp[i]);
   }
-  // stage 2 filter
-  // stage_2_filter(nSamples);
-
-  // down sample the result of the processing
-  // for (int i = 0; i < nSamples; ++i) {
-    // outbuf[i] = us_stage2filtered_buf[i << 1];
-  // }
-
 }
 
 } // namespace HardClipADAA

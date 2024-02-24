@@ -1,9 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <complex>
-/* #include <dsp/common.hpp> */
 #include <type_traits>
-#include "constants.h"
 
 /** Digital IIR filter processor. Using TDF-II structure:
  * https://ccrma.stanford.edu/~jos/filters/Transposed_Direct_Forms.html
