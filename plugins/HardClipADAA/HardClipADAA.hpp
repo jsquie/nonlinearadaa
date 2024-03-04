@@ -13,27 +13,27 @@ enum AntiDerivativeLevel { FirstOrder = 1, SecondOrder = 2 };
 
 template<typename Func, typename Ad_Func> 
 static inline double next_first_adaa(const double& s, 
-                                     double*& x1, double*& ad1_x1, 
+                                     double& x1, double& ad1_x1, 
                                      Func f, Ad_Func first_ad);
 
 template<typename Func, typename FuncFirstAD, typename FuncSecondAD>
 inline double next_second_adaa(const double& s, 
-                              double*& x1, double*& x2, 
-                              double*& ad2_x0, double*& ad2_x1, 
-                              double*& d2, 
+                              double& x1, double& x2, 
+                              double& ad2_x0, double& ad2_x1, 
+                              double& d2, 
                               Func f, 
                               FuncFirstAD f_first_ad, FuncSecondAD f_second_ad);
 
 template<typename FuncFirstAD, typename FuncSecondAD>
 inline double calcD(const double& v0,
-                   double*& x1, 
-                   double*& ad2_x0, double*& ad2_x1,
+                   double& x1, 
+                   double& ad2_x0, double& ad2_x1,
                    FuncFirstAD f_first_ad, FuncSecondAD f_second_ad); 
 
 template<typename Func, typename FuncFirstAD, typename FuncSecondAD>
 inline double fallback(const double& x,
-                      double*& x1, double*& x2,
-                      double*& ad2_x1,
+                      double& x1, double& x2,
+                      double& ad2_x1,
                       Func f, FuncFirstAD f_first_ad, FuncSecondAD f_second_ad);
 
 

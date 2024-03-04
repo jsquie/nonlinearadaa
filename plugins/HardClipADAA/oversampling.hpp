@@ -31,7 +31,7 @@ public:
 
     /**
 
-    void processSamplesUp(const float* inputBlock) noexcept;
+    void processSamplesUp(const float* inputBlock, float*& outputBlock) noexcept;
     void processSamplesDown(float*& outputBlock) noexcept;
 
 

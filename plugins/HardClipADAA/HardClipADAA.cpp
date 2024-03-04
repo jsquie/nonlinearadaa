@@ -21,29 +21,29 @@ namespace TOL {
 namespace ADAA {
 
 template<typename Func, typename Ad_Func> 
-static inline double next_first_adaa(const double& s, double*& x1, double*& ad1_x1, Func f, Ad_Func first_ad) 
+static inline double next_first_adaa(const double& s, double& x1, double& ad1_x1, Func f, Ad_Func first_ad) 
 {
   double res;
   double ad1_x = first_ad(s);
-  double diff = s - *x1;
+  double diff = s - x1;
 
   if (std::abs(diff) <= TOL::TOL) {
-    res = f(0.5 * (s + *x1));
+    res = f(0.5 * (s + x1));
   } else {
-    res = (ad1_x - *ad1_x1) / diff;
+    res = (ad1_x - ad1_x1) / diff;
   }
 
-  *ad1_x1 = ad1_x;
-  *x1 = s;
+  ad1_x1 = ad1_x;
+  x1 = s;
 
   return res;
 }
 
 template<typename Func, typename FuncFirstAD, typename FuncSecondAD>
 inline double next_second_adaa(const double& s, 
-                                      double*& x1, double*& x2, 
-                                      double*& ad2_x0, double*& ad2_x1, 
-                                      double*& d2, 
+                                      double& x1, double& x2, 
+                                      double& ad2_x0, double& ad2_x1, 
+                                      double& d2, 
                                       Func f, 
                                       FuncFirstAD f_first_ad, FuncSecondAD f_second_ad) 
 {
@@ -51,16 +51,16 @@ inline double next_second_adaa(const double& s,
   double d1 = calcD(s, x1, ad2_x0, ad2_x1, f_first_ad, f_second_ad);
 
   // x_n - x_{n-1} <= epsilon, then use 
-  if (std::abs(s - *x2) <= TOL::TOL) { // fallback
+  if (std::abs(s - x2) <= TOL::TOL) { // fallback
     res = fallback(s, x1, x2, ad2_x1, f, f_first_ad, f_second_ad);
   } else {
-    res = (2.0 / (s - *x2)) * (d1 - *d2); 
+    res = (2.0 / (s - x2)) * (d1 - d2); 
   }
 
-  *d2 = d1;
-  *x2 = *x1;
-  *x1 = s;
-  *ad2_x1 = *ad2_x0;
+  d2 = d1;
+  x2 = x1;
+  x1 = s;
+  ad2_x1 = ad2_x0;
 
   return res;
 }
@@ -68,16 +68,16 @@ inline double next_second_adaa(const double& s,
 
 template<typename FuncFirstAD, typename FuncSecondAD>
 inline double calcD(const double& v0,
-                                         double*& x1, 
-                                         double*& ad2_x0, double*& ad2_x1,
+                                         double& x1, 
+                                         double& ad2_x0, double& ad2_x1,
                                          FuncFirstAD f_first_ad, FuncSecondAD f_second_ad) 
 {
-  *ad2_x0 = f_second_ad(v0);
+  ad2_x0 = f_second_ad(v0);
 
-  if (std::abs(v0 - *x1) <= TOL::TOL) {
-    return f_first_ad(0.5 * (v0 + *x1));
+  if (std::abs(v0 - x1) <= TOL::TOL) {
+    return f_first_ad(0.5 * (v0 + x1));
   } else {
-    return (*ad2_x0 - *ad2_x1) / (v0 - *x1);
+    return (ad2_x0 - ad2_x1) / (v0 - x1);
   }
 
 }
@@ -85,17 +85,17 @@ inline double calcD(const double& v0,
 
 template<typename Func, typename FuncFirstAD, typename FuncSecondAD>
 inline double fallback(const double& x,
-                              double*& x1, double*& x2,
-                              double*& ad2_x1,
+                              double& x1, double& x2,
+                              double& ad2_x1,
                               Func f, FuncFirstAD f_first_ad, FuncSecondAD f_second_ad) 
 {
-  const double xbar = 0.5 * (x + *x2);
-  const double delta = xbar - *x1;
+  const double xbar = 0.5 * (x + x2);
+  const double delta = xbar - x1;
 
   if (std::abs(delta) <= TOL::TOL) {
-    return f(0.5 * (xbar + *x1));
+    return f(0.5 * (xbar + x1));
   } else {
-    return (2.0 / delta) * (f_first_ad(xbar) + ((*ad2_x1 - f_second_ad(xbar)) / delta));
+    return (2.0 / delta) * (f_first_ad(xbar) + ((ad2_x1 - f_second_ad(xbar)) / delta));
   }
 }
 
@@ -219,25 +219,17 @@ void HardClipADAA::next_aa(int nSamples) {
   for (i = 0; i < twoNSamples; ++i) {
 
     if (adlevel == ADAA::AntiDerivativeLevel::FirstOrder){
-      double* x1_ptr = &x1;
-      double* ad1_x1_ptr = &ad1_x1;
 
       osBuffer[i] = ADAA::next_first_adaa(osBuffer[i], 
-                                          x1_ptr, 
-                                          ad1_x1_ptr, 
+                                          x1, 
+                                          ad1_x1, 
                                           HardClipADAA::clip, 
                                           HardClipADAA::hc_first_ad);
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::SecondOrder) {
-      double* x1_ptr = &x1;
-      double* x2_ptr = &x2;
-      double* ad2_x0_ptr = &ad2_x0;
-      double* ad2_x1_ptr = &ad2_x1;
-      double* d2_ptr = &d2;
-
       osBuffer[i] = ADAA::next_second_adaa(osBuffer[i],
-                                           x1_ptr, x2_ptr,
-                                           ad2_x0_ptr, ad2_x1_ptr, d2_ptr,
+                                           x1, x2,
+                                           ad2_x0, ad2_x1, d2,
                                            HardClipADAA::clip,
                                            HardClipADAA::hc_first_ad,
                                            HardClipADAA::hc_second_ad);
@@ -371,25 +363,18 @@ void TanhADAA::next_aa(int nSamples) {
   for (i = 0; i < twoNSamples; ++i) {
 
     if (adlevel == ADAA::AntiDerivativeLevel::FirstOrder){
-      double* x1_ptr = &x1;
-      double* ad1_x1_ptr = &ad1_x1;
 
       osBuffer[i] = ADAA::next_first_adaa(osBuffer[i], 
-                                          x1_ptr, 
-                                          ad1_x1_ptr, 
+                                          x1, 
+                                          ad1_x1, 
                                           [](double v) { return std::tanh(v); }, 
                                           TanhADAA::tanh_first_ad);
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::SecondOrder) {
-      double* x1_ptr = &x1;
-      double* x2_ptr = &x2;
-      double* ad2_x0_ptr = &ad2_x0;
-      double* ad2_x1_ptr = &ad2_x1;
-      double* d2_ptr = &d2;
 
       osBuffer[i] = ADAA::next_second_adaa(osBuffer[i],
-                                           x1_ptr, x2_ptr,
-                                           ad2_x0_ptr, ad2_x1_ptr, d2_ptr,
+                                           x1, x2,
+                                           ad2_x0, ad2_x1, d2,
                                            [](double v) { return std::tanh(v); },
                                            TanhADAA::tanh_first_ad,
                                            TanhADAA::tanh_second_ad);
