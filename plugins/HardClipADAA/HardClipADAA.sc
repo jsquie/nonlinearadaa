@@ -1,12 +1,22 @@
 HardClipADAA : UGen {
-	*ar { |input, amp = 1, oversample = 1|
-		/* TODO */
+
+	*ar { |input, adLevel=2|
     if(input.rate!='audio'){input = K2A.ar(input)};
-    if(amp.rate!='audio'){amp = K2A.ar(amp)};
-		^this.multiNew(\audio, input, amp, oversample);
+		^this.multiNew(\audio, input, adLevel);
 	}
+
 	checkInputs {
-		/* TODO */
 		^this.checkValidInputs;
 	}
+}
+
+TanhADAA : UGen {
+  *ar { |input, adLevel=2|
+    if(input.rate!='audio') {input = K2A.ar(input)};
+    ^this.multiNew(\audio, input, adLevel);
+  }
+
+  checkInputs {
+    ^this.checkValidInputs;
+  }
 }

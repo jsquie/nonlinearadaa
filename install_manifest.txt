@@ -1,0 +1,4 @@
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/HardClipADAA_scsynth.scx
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/HardClipADAA_supernova.scx
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/Classes/HardClipADAA.sc
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/HelpSource/Classes/HardClipADAA.schelp
