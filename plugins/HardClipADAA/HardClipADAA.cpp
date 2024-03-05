@@ -110,6 +110,7 @@ namespace HardClipADAA {
 HardClipADAA::HardClipADAA() {
 
 
+  os.init(2, (int)inBufferSize(0));
 
   fcoefs.gen_coefs((int)sampleRate());
 
@@ -204,30 +205,23 @@ void HardClipADAA::next_aa(int nSamples) {
   const float* sig = in(Input);
 
   float* outbuf = out(Out1); const int adlevel = (int)in0(AntiDerivativeLevel);
-  // upsample 
-  for (i = 0; i < nSamples; ++i) {
-    osBuffer[i << 1] = static_cast<double>(sig[i]);
-    osBuffer[(i << 1) + 1] = 0.0;
-  }
 
-  // filter
-  for (i = 0; i < twoNSamples; ++i) {
-    osBuffer[i] = filter_next(osBuffer[i], xv1, yv1);
-  }
+  // reset Oversampling for oversampling  
+  os.reset();
+  // upsample
+  os.processSamplesUp(sig, nSamples);
 
   // process
-  for (i = 0; i < twoNSamples; ++i) {
-
+  for (double s : os.getProcessedSamples()) {
     if (adlevel == ADAA::AntiDerivativeLevel::FirstOrder){
-
-      osBuffer[i] = ADAA::next_first_adaa(osBuffer[i], 
+      osBuffer[i] = ADAA::next_first_adaa(s, 
                                           x1, 
                                           ad1_x1, 
                                           HardClipADAA::clip, 
                                           HardClipADAA::hc_first_ad);
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::SecondOrder) {
-      osBuffer[i] = ADAA::next_second_adaa(osBuffer[i],
+      osBuffer[i] = ADAA::next_second_adaa(s,
                                            x1, x2,
                                            ad2_x0, ad2_x1, d2,
                                            HardClipADAA::clip,
@@ -235,19 +229,14 @@ void HardClipADAA::next_aa(int nSamples) {
                                            HardClipADAA::hc_second_ad);
 
     }
-
   }
-
+  
   // filter again
-  for (i = 0; i < twoNSamples; ++i) {
-    osBuffer[i] = filter_next(osBuffer[i], xv2, yv2);
-  }
+  os.processSamplesDown();
 
-  // downsample and out
-  for (i = 0; i < nSamples; ++i) {
-    outbuf[i] = static_cast<float>(osBuffer[i << 1]);
+  for (double s : os.getProcessedSamples()) {
+    outbuf[i] = static_cast<float>(s);
   }
-
 
 }
 

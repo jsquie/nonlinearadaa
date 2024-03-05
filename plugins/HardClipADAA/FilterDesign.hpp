@@ -11,7 +11,7 @@ class Filter
 {
 public:
     Filter() = default;
-    virtual ~Filter() {};
+    ~Filter() {};
 };
 
 
@@ -20,15 +20,15 @@ class IIRLowpassHalfBandPolyphase : public Filter
   public:
 
     IIRLowpassHalfBandPolyphase() {};
-    virtual ~IIRLowpassHalfBandPolyphase() = default;
+    ~IIRLowpassHalfBandPolyphase();
 
     void designIIRLowpassHalfBandPolyphaseAllpassMethod(const float& normalisedTransitionWidth, const float& stopbandAmplitudedB);
     const int getDirectPathSize() const;
     const int getDelayedPathSize() const;
 
-    std::shared_ptr<Coefficients[]> directPath;
-    std::shared_ptr<Coefficients[]> delayedPath;
-    std::shared_ptr<double[]> alpha;
+    std::vector<double> directPath;
+    std::vector<double> delayedPath;
+    std::vector<double> alpha;
 
   private:
 

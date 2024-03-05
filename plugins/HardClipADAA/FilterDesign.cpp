@@ -11,6 +11,8 @@ namespace FilterDesign
 {
 
 
+IIRLowpassHalfBandPolyphase::~IIRLowpassHalfBandPolyphase() { std::cout << "Deleting this filter IIRLowpassHalfBandPolyphase object!" << std::endl; };
+
 const int IIRLowpassHalfBandPolyphase::getDirectPathSize() const { return directPath_size; };
 
 const int IIRLowpassHalfBandPolyphase::getDelayedPathSize() const { return delayedPath_size; };
@@ -21,7 +23,7 @@ void IIRLowpassHalfBandPolyphase::designIIRLowpassHalfBandPolyphaseAllpassMethod
   assert(normalisedTransitionWidth > 0 && normalisedTransitionWidth <= 0.5);
   assert(stopbandAmplitudedB > -300 && stopbandAmplitudedB < -10);
 
-  std::cout << "Here at the design" << std::endl;
+  // std::cout << "Here at the design" << std::endl;
 
   // Calculate the angular transition width and stopband attenuation as preliminary params for the filter design
   const double wt = Constants::TWO_PI * normalisedTransitionWidth;
@@ -51,7 +53,7 @@ void IIRLowpassHalfBandPolyphase::designIIRLowpassHalfBandPolyphaseAllpassMethod
   const int N = (n - 1) / 2;
   // ai = coefficients
 
-  std::cout << "Number of coefs N is: " << N << std::endl;
+  // std::cout << "Number of coefs N is: " << N << std::endl;
   // Calculate the coefficients for each allpass filter in the structure
   for (int i = 1; i <= N; ++i) {
     double num = 0.0; // Numerator for the Wi calculation
@@ -82,25 +84,25 @@ void IIRLowpassHalfBandPolyphase::designIIRLowpassHalfBandPolyphaseAllpassMethod
     double wi = num / den;
     double api = std::sqrt((1 - wi * wi * k) * (1 - wi * wi / k)) / (1 + wi * wi);
     api = (1 - api) / (1 + api);
-    std::cout << "Adding coef to alpha: " << api << std::endl;
-    alpha[i] = api;
+    // std::cout << "Adding coef to alpha: " << api << std::endl;
+    alpha.push_back(api);
   }
 
   
-  // directPath_size = N / 2;
-  // delayedPath_size = (N / 2) + 1;
+  directPath_size = N / 2;
+  delayedPath_size = (N / 2) + 1;
 
   // Make sure that directpath is sizeof(double * 6) * ((N * 2) + 1) AKA sizeof(Coefficients)
   // Populate the direct path of the polyphase structure with the coefficients calculated above
   
   for (int i = 0; i < N / 2; ++i) {
     double coef_i = alpha[i << 1];
-    directPath[i] = Coefficients {coef_i, 0, 1, 1, 0, coef_i};
+    directPath.push_back(coef_i);
   }
 
   for (int i = 0; i < N / 2; ++i) {
     double coef_i = alpha[(i << 1) + 1];
-    delayedPath[i + 1] = Coefficients {coef_i, 0, 1, 1, 0, coef_i};
+    delayedPath.push_back(coef_i);
   }
 
 

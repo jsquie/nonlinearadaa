@@ -3,126 +3,245 @@
 #include "FilterDesign.hpp"
 #include "Utils.hpp"
 #include <algorithm>
-#include <cassert>
+#include <assert.h>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
 
 namespace Oversampling
 {
 
 
 class Oversampling::OversamplingStage
-{
-public:
-  OversamplingStage(int newFactor) : factor (newFactor) {}
+  {
+  public:
+    OversamplingStage(int newFactor) : factor (newFactor) {}
 
-  virtual ~OversamplingStage() {}
+    virtual ~OversamplingStage() {};
+    virtual void reset() {};
+    virtual void processSamplesUp(const std::vector<double>& inputBlock) {};
+    virtual std::vector<double>* getProcessedSamples() { return nullptr; };
 
-private:
-  double* buffer;
-  int factor;
+    std::vector<double>* buffer;
+    std::vector<double>* v1Up;
+    int factor;
 
-};
+  };
 
 
 class Oversampling2TimesPolyphaseIIR : public Oversampling::OversamplingStage
-{
-
-using ParentType = typename Oversampling::OversamplingStage;
-
-public:
-
-  Oversampling2TimesPolyphaseIIR(float normalizedTransitionWidthUp,
-                               float stopbandAmplitudeBUp,
-                               float normalizedTransitionWidthDown,
-                               float stopbandAmplitudeBDown) : ParentType(2), aiFilter(new FilterDesign::IIRLowpassHalfBandPolyphase), aaFilter(new FilterDesign::IIRLowpassHalfBandPolyphase)
-  {
-    aaFilter->designIIRLowpassHalfBandPolyphaseAllpassMethod (normalizedTransitionWidthUp, stopbandAmplitudeBUp);
-    aiFilter->designIIRLowpassHalfBandPolyphaseAllpassMethod (normalizedTransitionWidthDown, stopbandAmplitudeBDown);
-    
-
-    // give size info of buffer (nsamples) and set v1Up + v1Down sizes
-    v1Up_buffer_size = aiFilter->getDirectPathSize() + aiFilter->getDelayedPathSize();
-    v1Down_buffer_size = aaFilter->getDirectPathSize() + aaFilter->getDelayedPathSize();
-
-    bufferSetExternally = false;
-    // latency? Would require implementing getcoeffs and getPhaseForFrequency
-    // Initializing v1Up ? -> maybe need 
-
-  }
-
-private:
-    std::shared_ptr<FilterDesign::IIRLowpassHalfBandPolyphase> aiFilter;
-    std::shared_ptr<FilterDesign::IIRLowpassHalfBandPolyphase> aaFilter;
-    int v1Up_buffer_size;
-    int v1Down_buffer_size;
-    bool bufferSetExternally;
-
-};
-
-/**
-
-  void setOSBuffer(double* buffer_ptr, int size) override {
-    buffer = buffer_ptr;
-    buffer_size = size;
-    bufferSetExternally = true;
-  }
-
-  void reset() override
-  {
-    ParentType::reset();
-    std::fill(v1Up[0], v1Up[aiFilter.getDirectPathSize() + aiFilter.getDelayedPathSize()], 0.0);
-    std::fill(v1Down[0], v1Down[aaFilter.getDirectPathSize() + aaFilter.getDelayedPathSize()], 0.0);
-  }
-
-  void processSamplesUp(const double* samples, int numSamples) 
   {
 
-    assert(bufferSetExternally);
-    // coefs == aiFilter.directPath then aiFilter.delayedPath 
-    // int numStages = aiFilter.getDirectPathSize() + aiFilter.getDelayedPathSize();
+    using ParentType = typename Oversampling::OversamplingStage;
 
-    // Processing
-    // get pointers to the buffer for writing the output, to the delay line, and to the input
-    // buffer, v1Up, samples 
+  public:
 
-    // loop through each sample
-    for (int i = 0; i < numSamples; ++i) {
+    Oversampling2TimesPolyphaseIIR(float normalizedTransitionWidthUp,
+                                   float stopbandAmplitudeBUp,
+                                   float normalizedTransitionWidthDown,
+                                   float stopbandAmplitudeBDown, int bufferSize) : ParentType(2), buffer_size(bufferSize)
+    {
+      aaFilter = std::unique_ptr<FilterDesign::IIRLowpassHalfBandPolyphase>(new FilterDesign::IIRLowpassHalfBandPolyphase());
+      aiFilter = std::unique_ptr<FilterDesign::IIRLowpassHalfBandPolyphase>(new FilterDesign::IIRLowpassHalfBandPolyphase());
+      aiFilter->designIIRLowpassHalfBandPolyphaseAllpassMethod (normalizedTransitionWidthUp, stopbandAmplitudeBUp);
+      aiFilter->designIIRLowpassHalfBandPolyphaseAllpassMethod (normalizedTransitionWidthDown, stopbandAmplitudeBDown);
 
-      // direct path cascaded allpass filters
-      // start with the current input sample
-      auto input = samples[i];
 
-      // process the input through each direct path allpass filter
-      for (int n = 0; n < aiFilter.getDirectPathSize(); ++n) {
-        auto alpha = aiFilter.directPath[n].coefficients[0]; // the filter coefficient
-        auto output = alpha * input + v1Up[n]; // the filtered output
-        v1Up[n] = input - alpha * output; // update the delay line with the new value
-        input = output;  // Pass the output as the next input
-      }
-
-      // Output the processed sample to the even-indexed positions in the buffer (because we're upsampling by 2)
-      buffer[i << 1] = input;
-
-      // Delayed path cascaded allpass filters
-      // Reset input to the original sample for processing through the delayed path
-      input = samples[i];
-
-      auto delayedPath_offset = aiFilter.getDirectPathSize();
-
-      // process input through each delayed path allpass filter
-      for (int n = 0; n < aiFilter.getDelayedPathSize(); ++n) {
-        auto alpha = aiFilter.delayedPath[n].coefficients[0]; // filter coefficient
-        auto output = alpha * input * v1Up[n + delayedPath_offset]; // filtered output 
-        v1Up[n + delayedPath_offset] = input - alpha * output; // update the delay line with the new value
-        input = output; // pas the output as teh next input
-      }
-
-      // Output the processed sample to the odd-indexed positions in the output buffer
-      buffer[(i << 1) + 1] = input;
+      buffer = new std::vector<double>(buffer_size, 0.0);
+      v1Up = new std::vector<double>(aiFilter->getDirectPathSize() + aiFilter->getDelayedPathSize(), 0.0);
+      assert(buffer != nullptr);
+      assert(v1Up != nullptr);
 
     }
+
+    ~Oversampling2TimesPolyphaseIIR() {
+      std::cout << "Deleting 2time poly" << std::endl;
+    }
+
+    void reset() override {
+      std::fill(buffer->begin(), buffer->end(), 0.0);
+      std::fill(v1Up->begin(), v1Up->end(), 0.0);
+    }
+
+    /*
+    void processSamplesUp(const std::vector<double>& inputBlock) override {
+      assert(buffer != nullptr);
+      for (double d : inputBlock) {
+        buffer->push_back(d);
+      }
+    }
+    */
+
+    void processSamplesUp(const std::vector<double>& inputBlock) override 
+    {
+
+      assert(buffer != nullptr);
+      assert(v1Up != nullptr);
+      assert(aiFilter != nullptr);
+
+      std::cout << "Processing samples Up from inside 2time poly" << std::endl;
+      // coefs == aiFilter.directPath then aiFilter.delayedPath 
+      // int numStages = aiFilter.getDirectPathSize() + aiFilter.getDelayedPathSize();
+
+      // Processing
+      // get pointers to the buffer for writing the output, to the delay line, and to the input
+      // buffer, v1Up, samples 
+      int i = 0;
+
+      // loop through each sample
+      for (double s : inputBlock) {
+
+        // direct path cascaded allpass filters
+        // start with the current input sample
+        auto input = s;
+        std::cout << "Processing s: " << s << std::endl;
+        std::cout << "Buffersize: " << buffer_size << std::endl;
+
+        // process the input through each direct path allpass filter
+        for (int n = 0; n < aiFilter->getDirectPathSize(); ++n) {
+          auto alpha = aiFilter->directPath[n]; // the filter coefficient
+          auto output = alpha * input + v1Up->at(n); // the filtered output
+          v1Up->at(n) = input - alpha * output; // update the delay line with the new value
+          input = output;  // Pass the output as the next input
+        }
+
+        // Output the processed sample to the even-indexed positions in the buffer (because we're upsampling by 2)
+        buffer->at(i << 1) = input;
+
+        // Delayed path cascaded allpass filters
+        // Reset input to the original sample for processing through the delayed path
+        input = s; 
+
+        auto delayedPath_offset = aiFilter->getDirectPathSize();
+
+        // process input through each delayed path allpass filter
+        for (int n = 0; n < aiFilter->getDelayedPathSize(); ++n) {
+          auto alpha = aiFilter->delayedPath[n]; // filter coefficient
+          auto output = alpha * input * v1Up->at(n + delayedPath_offset); // filtered output 
+          v1Up->at(n + delayedPath_offset) = input - alpha * output; // update the delay line with the new value
+          input = output; // pas the output as teh next input
+        }
+
+        // Output the processed sample to the odd-indexed positions in the output buffer
+        buffer->at((i << 1) + 1) = input;
+        // *buffer[(i << 1) + 1] = input;
+        ++i;
+      }
+    }
+
+
+    std::vector<double>* getProcessedSamples() override {
+      assert(buffer != nullptr);
+      return buffer;
+    }
+
+    std::unique_ptr<FilterDesign::IIRLowpassHalfBandPolyphase> aiFilter;
+    std::unique_ptr<FilterDesign::IIRLowpassHalfBandPolyphase> aaFilter;
+    const int buffer_size;
+
+  };
+
+Oversampling::~Oversampling() {
+  std::cout << "Deleting this Oversampling object" << std::endl;
+  for (auto s : *stages) {
+    delete s;
+  }
+}
+
+void Oversampling::reset() {
+  for (auto stage : *stages) {
+    stage->reset();
   }
 
+}
+
+void Oversampling::init(const int& factor, const int& buffer_size) {
+  std::cout << "Initializing the oversampling object!" << std::endl;
+  factorOversampling = factor;
+  stages = new std::vector<OversamplingStage*>;
+
+  for (int n = 0; n < factor; ++n) {
+    auto twUp = 0.12f * (n == 0 ? 0.5f : 1.0f);
+    auto twDown = 0.15f * (n == 0? 0.5f : 1.0f);
+
+    auto gaindBStartUp = -70.0f;
+    auto gaindBStartDown = -60.0f;
+    auto gaindBFactorUp = 8.0f;
+    auto gaindBFactorDown = 8.0f;
+
+    addOverSamplingStage(twUp, 
+                         gaindBStartUp + gaindBFactorUp * (float)n,
+                         twDown,
+                         gaindBStartDown + gaindBFactorDown * (float)n,
+                         buffer_size * (n + 1));
+
+  }
+
+}
+
+void Oversampling::addOverSamplingStage(float normalizedTransitionWidthUp,
+                                        float stopbandAmplitudeBUp,
+                                        float normalizedTransitionWidthDown,
+                                        float stopbandAmplitudeBDown,
+                                        const int& buffer_size) 
+{
+
+  assert(stages && stages != nullptr);
+  std::cout << "Adding a over sampling stage!" << std::endl;
+
+  auto new_stage = new Oversampling2TimesPolyphaseIIR(normalizedTransitionWidthUp,
+                                                      stopbandAmplitudeBUp,
+                                                      normalizedTransitionWidthDown,
+                                                      stopbandAmplitudeBDown,
+                                                      buffer_size);
+
+  stages->push_back(new_stage);
+  numStages++;
+}
+
+void Oversampling::processSamplesUp(const float* inputBlock, const int& size) {
+  assert(stages && stages != nullptr);
+  std::cout << "Processing samples Up! From the Oversampling class itself" << std::endl;
+  // initial stage uses inputBlock
+  // essentially a dumby os stage that does nothing
+  for (int i = 0; i < size; ++i) {
+    assert((*stages)[0]->buffer != nullptr);
+    assert((*stages)[0]->buffer);
+    // std::cout << "Adding inputBlock[i]: " << inputBlock[i] << " to stages[0].buffer" << std::endl;
+
+    (*stages)[0]->buffer->push_back(static_cast<double>(inputBlock[i]));
+  }
+
+  std::cout << "Added inputBlock data to initial stage. On to processing stages up" << std::endl;
+
+  for (int i = 1; i < numStages; ++i) {
+
+    assert(stages != nullptr);
+    assert(stages);
+    auto prev = (*stages)[i - 1]->buffer;
+    assert(prev != nullptr);
+    assert(prev);
+    (*stages)[i]->processSamplesUp(*prev);
+  }
+
+  justProcessed = Processed::Up;
+}
+
+void Oversampling::processSamplesDown() noexcept {
+
+  justProcessed = Processed::Down;
+
+}
+
+std::vector<double> Oversampling::getProcessedSamples() {
+  // std::cout << "Getting OS processed samples" << std::endl;
+  // std::cout << "stages front buffer[0]: " << (*stages->back()).buffer->front() << std::endl;
+  // assert(!(*stages->back()).buffer->empty());
+  (justProcessed == Processed::Up) ? assert ((*stages->back()).buffer != nullptr) : assert ((*stages->front()).buffer != nullptr);
+  return (justProcessed == Processed::Up) ? *(*stages->back()).buffer : *(*stages->front()).buffer;
+
+}
+/**
   void processSamplesDown(double* output, int numSamples)
   {
 
@@ -164,64 +283,8 @@ private:
     }
   }
 
-private:
 
-  double* v1Up;
-  double* v1Down;
-  double delay;
-
-  int v1Up_buffer_size;
-  int v1Down_buffer_size;
-
-  FilterDesign::IIRLowpassHalfBandPolyphase aiFilter;
-  FilterDesign::IIRLowpassHalfBandPolyphase aaFilter;
-
-  bool bufferSetExternally;
-
-
-}
 **/
-
-
-void Oversampling::init(int factor, int sc_numSamples, float*& upNormalizedTransitionWidths, float*& upStopbandAmplitudesdB,
-                                                       float*& downNormalizedTransitionWidths, float*& downStopbandAmplitudesdB)
-{
-
-  // stages_add_idx = 0;
-
-  factorOversampling = factor;
-  numSamples = sc_numSamples;
-
-  for (int n = 0; n < factor; ++n) {
-    auto twUp = 0.12f * (n == 0 ? 0.5f : 1.0f);
-    auto twDown = 0.15f * (n == 0? 0.5f : 1.0f);
-
-    auto gaindBStartUp = -70.0f;
-    auto gaindBStartDown = -60.0f;
-    auto gaindBFactorUp = 8.0f;
-    auto gaindBFactorDown = 8.0f;
-
-    upNormalizedTransitionWidths[n] = twUp;
-    upStopbandAmplitudesdB[n] = gaindBStartUp + gaindBFactorUp * (float)n;
-    downNormalizedTransitionWidths[n] = twDown;
-    downStopbandAmplitudesdB[n] = gaindBStartDown + gaindBFactorDown * (float)n;
-
-    // stages[n] = Oversampling2TimesPolyphaseIIR(1.0, 1.0, 1.0, 1.0);
-  }
-
-};
-
-
-void Oversampling::addOverSamplingStage(float normalizedTransitionWidthUp, float stopbandAmplitudedBUp,
-                                        float normalizedTransitionWidthDown, float stopbandAmplitudedBDown)
-{
-
-  stages[stages_add_idx] = std::shared_ptr<Oversampling2TimesPolyphaseIIR>(new Oversampling2TimesPolyphaseIIR(normalizedTransitionWidthUp, stopbandAmplitudedBUp,
-                                                              normalizedTransitionWidthDown, stopbandAmplitudedBDown));
-  
-  stages_add_idx += 1;
-  factorOversampling *= 2;
-};
 
 /**
 void Oversampling::processSamplesUp(double* samples)
@@ -254,4 +317,5 @@ void Oversampling::processSamplesDown(double* output)
 
 }
 **/
+
 } // Namespace Oversampling 

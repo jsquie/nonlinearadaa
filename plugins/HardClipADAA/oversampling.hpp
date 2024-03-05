@@ -19,32 +19,40 @@ class Oversampling
 public:
     Oversampling() = default;
 
-    virtual ~Oversampling() {}
+    ~Oversampling();
 
     class OversamplingStage;
 
-    void init(int factor, int sc_numSamples, float*& upNormalizedTransitionWidths, float*& upStopbandAmplitudesdB,
-                                                       float*& downNormalizedTransitionWidths, float*& downStopbandAmplitudesdB);
+    // void init(int factor, int sc_numSamples, float*& upNormalizedTransitionWidths, float*& upStopbandAmplitudesdB,
+                                                       // float*& downNormalizedTransitionWidths, float*& downStopbandAmplitudesdB);
 
-    void addOverSamplingStage(float normalizedTransitionWidthUp, float stopbandAmplitudedBUp,
-                              float normalizedTransitionWidthDown, float stopbandAmplitudedBDown);
+    // void addOverSamplingStage(float normalizedTransitionWidthUp, float stopbandAmplitudedBUp,
+                              // float normalizedTransitionWidthDown, float stopbandAmplitudedBDown);
 
-    /**
+    void reset();
+    void init(const int& factor, const int& buffer_size);
 
-    void processSamplesUp(const float* inputBlock, float*& outputBlock) noexcept;
-    void processSamplesDown(float*& outputBlock) noexcept;
+    void addOverSamplingStage(float normalizedTransitionWidthUp,
+                              float stopbandAmplitudeBUp,
+                              float normalizedTransitionWidthDown,
+                              float stopbandAmplitudeBDown,
+                              const int& buffer_size);
 
+    void processSamplesUp(const float* inputBlock, const int& size);
+    void processSamplesDown() noexcept;
+    std::vector<double> getProcessedSamples();
 
-    void clearOverSamplingStages();
-    **/
+    // void clearOverSamplingStages();
+    
 
     // int numChannels = 1;
 private:
 
-    int factorOversampling{2};
-    int numSamples;
-    int stages_add_idx{0};
-    std::shared_ptr<std::shared_ptr<OversamplingStage>[]> stages;
+    enum Processed {Up = true, Down = false};
+    bool justProcessed{Processed::Up};
+    std::vector<OversamplingStage*>* stages;
+    int factorOversampling;
+    int numStages{0};
 };
 
 } // Namespace Oversampling
