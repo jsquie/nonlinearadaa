@@ -1,0 +1,5 @@
+if(EXISTS "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FIRFilterTests[1]_tests.cmake")
+  include("/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FIRFilterTests[1]_tests.cmake")
+else()
+  add_test(FIRFilterTests_NOT_BUILT FIRFilterTests_NOT_BUILT)
+endif()

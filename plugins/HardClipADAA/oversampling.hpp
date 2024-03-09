@@ -5,6 +5,7 @@
 #pragma once
 
 #include <memory>
+#include "Utils.hpp"
 
 namespace Oversampling
 {

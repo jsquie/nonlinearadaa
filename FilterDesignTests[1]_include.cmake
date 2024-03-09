@@ -1,0 +1,5 @@
+if(EXISTS "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FilterDesignTests[1]_tests.cmake")
+  include("/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FilterDesignTests[1]_tests.cmake")
+else()
+  add_test(FilterDesignTests_NOT_BUILT FilterDesignTests_NOT_BUILT)
+endif()

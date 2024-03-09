@@ -84,11 +84,12 @@ void IIRLowpassHalfBandPolyphase::designIIRLowpassHalfBandPolyphaseAllpassMethod
     double wi = num / den;
     double api = std::sqrt((1 - wi * wi * k) * (1 - wi * wi / k)) / (1 + wi * wi);
     api = (1 - api) / (1 + api);
-    // std::cout << "Adding coef to alpha: " << api << std::endl;
+    std::cout << "Adding coef to alpha: " << api << std::endl;
     alpha.push_back(api);
   }
 
   
+  std::cout << "directPath_size: " << N / 2 << std::endl;
   directPath_size = N / 2;
   delayedPath_size = (N / 2) + 1;
 
@@ -97,11 +98,13 @@ void IIRLowpassHalfBandPolyphase::designIIRLowpassHalfBandPolyphaseAllpassMethod
   
   for (int i = 0; i < N / 2; ++i) {
     double coef_i = alpha[i << 1];
+    std::cout << "Adding coefficient to direct path" << std::endl;
     directPath.push_back(coef_i);
   }
 
   for (int i = 0; i < N / 2; ++i) {
     double coef_i = alpha[(i << 1) + 1];
+    std::cout << "Adding coefficient to delayed path" << std::endl;
     delayedPath.push_back(coef_i);
   }
 

@@ -1,6 +1,6 @@
 CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/Li2.cpp.o: \
   /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/Li2.cpp \
-  /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/Li2.hpp \
+  /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/./Li2.hpp \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/complex \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/__assert \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/__config \
@@ -793,8 +793,8 @@ CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/Li2.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/_types/_nl_item.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/__bsd_locale_defaults.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/cstdarg \
-  /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/complex.hpp \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/cfloat \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/float.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include/float.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/float.h
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/float.h \
+  /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/./complex.hpp

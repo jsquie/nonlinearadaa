@@ -1,0 +1,30 @@
+Start testing: Mar 08 13:47 PST
+----------------------------------------------------------
+1/1 Testing: FilterDesignTests.BasicAssertions
+1/1 Test: FilterDesignTests.BasicAssertions
+Command: "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FilterDesignTests" "--gtest_filter=FilterDesignTests.BasicAssertions" "--gtest_also_run_disabled_tests"
+Directory: /Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa
+"FilterDesignTests.BasicAssertions" start time: Mar 08 13:47 PST
+Output:
+----------------------------------------------------------
+Running main() from /Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = FilterDesignTests.BasicAssertions
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FilterDesignTests
+[ RUN      ] FilterDesignTests.BasicAssertions
+[       OK ] FilterDesignTests.BasicAssertions (0 ms)
+[----------] 1 test from FilterDesignTests (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"FilterDesignTests.BasicAssertions" end time: Mar 08 13:47 PST
+"FilterDesignTests.BasicAssertions" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Mar 08 13:47 PST

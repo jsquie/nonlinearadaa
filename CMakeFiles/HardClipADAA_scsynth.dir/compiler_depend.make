@@ -1593,6 +1593,8 @@ CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/HardClipADAA.cpp.o: plu
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include/stdint.h \
   plugins/HardClipADAA/HardClipADAA.hpp \
+  plugins/HardClipADAA/Utils.hpp \
+  plugins/HardClipADAA/FIRFilter.hpp \
   plugins/HardClipADAA/IIRFilterCoefs.hpp \
   plugins/HardClipADAA/Li2.hpp \
   plugins/HardClipADAA/Oversampling.hpp \
@@ -4357,6 +4359,8 @@ plugins/HardClipADAA/Li2.hpp:
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/Availability.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/__bit/bit_cast.h:
+
+plugins/HardClipADAA/FIRFilter.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/__type_traits/is_function.h:
 
