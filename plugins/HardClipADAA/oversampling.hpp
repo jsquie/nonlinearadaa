@@ -1,59 +1,44 @@
-// Limited implementation of oversampling 
+// Limited implementation of oversampling
 // Adapted from JUCE by James Squires
 // https://github.com/juce-framework/JUCE/blob/master/modules/juce_dsp/processors/juce_Oversampling.h
 
 #pragma once
 
+#include "./Filter.hpp"
 #include <memory>
-#include "Utils.hpp"
-
-namespace Oversampling
-{
-
- 
 
 
+namespace JSCDSP::Oversampling {
+
+class Oversampling {
+ public:
+  Oversampling() = default;
+
+  ~Oversampling();
 
 
-class Oversampling
-{
-public:
-    Oversampling() = default;
+  void reset();
+  void init(const int& factor, const int& buffer_size);
 
-    ~Oversampling();
+  void addOverSamplingStage(float normalizedTransitionWidthUp,
+                            float stopbandAmplitudeBUp,
+                            float normalizedTransitionWidthDown,
+                            float stopbandAmplitudeBDown);
 
-    class OversamplingStage;
+  void processSamplesUp();
+  void processSamplesDown();
+  std::vector<double> getProcessedSamples();
+  void createFilters();
+  Filter::FilterStructure<double>* getFilterStructures() { return filterStructures; };
 
-    // void init(int factor, int sc_numSamples, float*& upNormalizedTransitionWidths, float*& upStopbandAmplitudesdB,
-                                                       // float*& downNormalizedTransitionWidths, float*& downStopbandAmplitudesdB);
-
-    // void addOverSamplingStage(float normalizedTransitionWidthUp, float stopbandAmplitudedBUp,
-                              // float normalizedTransitionWidthDown, float stopbandAmplitudedBDown);
-
-    void reset();
-    void init(const int& factor, const int& buffer_size);
-
-    void addOverSamplingStage(float normalizedTransitionWidthUp,
-                              float stopbandAmplitudeBUp,
-                              float normalizedTransitionWidthDown,
-                              float stopbandAmplitudeBDown,
-                              const int& buffer_size);
-
-    void processSamplesUp(const float* inputBlock, const int& size);
-    void processSamplesDown() noexcept;
-    std::vector<double> getProcessedSamples();
-
-    // void clearOverSamplingStages();
-    
-
-    // int numChannels = 1;
-private:
-
-    enum Processed {Up = true, Down = false};
-    bool justProcessed{Processed::Up};
-    std::vector<OversamplingStage*>* stages;
-    int factorOversampling;
-    int numStages{0};
+  // int numChannels = 1;
+ private:
+  enum Processed { Up = true, Down = false };
+  bool justProcessed{Processed::Up};
+  int factorOversampling{2};
+  int numStages{0};
+  Filter::FilterStructure<double>* filterStructures;
 };
 
-} // Namespace Oversampling
+
+} // namespace JSCDSP::Oversampling

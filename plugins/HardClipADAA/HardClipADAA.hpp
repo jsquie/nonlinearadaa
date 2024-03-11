@@ -4,44 +4,41 @@
 
 #pragma once
 
-#include "IIRFilterCoefs.hpp"
 #include "Oversampling.hpp"
 #include "SC_PlugIn.hpp"
 
-namespace ADAA {
-
-enum AntiDerivativeLevel { FirstOrder = 1, SecondOrder = 2 };
+namespace JSCDSP::ADAA {
 
 template <typename Func, typename Ad_Func>
-static inline double next_first_adaa(const double& s, double* x1,
-                                     double* ad1_x1, Func f, Ad_Func first_ad);
+static inline double next_first_adaa(const double &s, double *x1,
+                                     double *ad1_x1, Func f, Ad_Func first_ad);
 
 template <typename Func, typename FuncFirstAD, typename FuncSecondAD>
-inline double next_second_adaa(const double& s, double* x1, double* x2,
-                               double* ad2_x0, double* ad2_x1, double* d2,
+inline double next_second_adaa(const double &s, double *x1, double *x2,
+                               double *ad2_x0, double *ad2_x1, double *d2,
                                Func f, FuncFirstAD f_first_ad,
                                FuncSecondAD f_second_ad);
 
+
 template <typename FuncFirstAD, typename FuncSecondAD>
-inline double calcD(const double& v0, const double& x1, double* ad2_x0,
-                    const double& ad2_x1, FuncFirstAD f_first_ad,
+inline double calcD(const double &v0, const double &x1, double* ad2_x0,
+                    const double &ad2_x1, FuncFirstAD f_first_ad,
                     FuncSecondAD f_second_ad);
 
 template <typename Func, typename FuncFirstAD, typename FuncSecondAD>
-inline double fallback(const double& x, const double& x1, const double& x2,
-                       const double& ad2_x1, Func f, FuncFirstAD f_first_ad,
+inline double fallback(const double &x, const double &x1, const double &x2,
+                       const double &ad2_x1, Func f, FuncFirstAD f_first_ad,
                        FuncSecondAD f_second_ad);
-}  // namespace ADAA
 
-namespace HardClipADAA {
+} // namespace JSCDSP::ADAA
+
+namespace JSCDSP::HardClipADAA {
 
 class HardClipADAA : public SCUnit {
  public:
   HardClipADAA();
   // Destructor
   ~HardClipADAA();
-  IIRFilterCoefs fcoefs;
-  // Oversampling::Oversampling os;
 
  private:
   // Calc function
@@ -85,16 +82,15 @@ class HardClipADAA : public SCUnit {
   enum Outputs { Out1, NumOutputParams };
 };
 
-}  // namespace HardClipADAA
+}  // namespace JSCDSP::HardClipADAA
 
-namespace TanhADAA {
+namespace JSCDSP::TanhADAA {
 
 class TanhADAA : public SCUnit {
  public:
   TanhADAA();
   // Destructor
   ~TanhADAA();
-  IIRFilterCoefs fcoefs;
 
  private:
   // Calc function
@@ -109,6 +105,8 @@ class TanhADAA : public SCUnit {
   double d2;
   double ad2_x1;
   double ad2_x0;
+
+  Oversampling::Oversampling os;
 
   double* osBuffer;
 
@@ -128,4 +126,4 @@ class TanhADAA : public SCUnit {
   enum Outputs { Out1, NumOutputParams };
 };
 
-}  // namespace TanhADAA
+}  // namespace JSCDSP::TanhADAA

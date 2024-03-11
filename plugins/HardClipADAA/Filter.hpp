@@ -1,5 +1,5 @@
 
-namespace Filter {
+namespace JSCDSP::Filter {
 
 template <typename NumType>
 struct FilterStructure {
@@ -13,5 +13,4 @@ struct FilterStructure {
   NumType *circular_buf;
 };
 
-} // namespace Filter 
-
+}  // namespace Filter

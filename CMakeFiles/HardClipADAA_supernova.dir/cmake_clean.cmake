@@ -1,6 +1,4 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/FilterDesign.cpp.o"
-  "CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/FilterDesign.cpp.o.d"
   "CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/HardClipADAA.cpp.o"
   "CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/HardClipADAA.cpp.o.d"
   "CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/Li2.cpp.o"

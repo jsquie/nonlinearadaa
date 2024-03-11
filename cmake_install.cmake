@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/Users/jamessquires/Library/Application Support/SuperCollider/Extensions")
+  set(CMAKE_INSTALL_PREFIX "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -12,7 +12,7 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
-    set(CMAKE_INSTALL_CONFIG_NAME "DEBUG")
+    set(CMAKE_INSTALL_CONFIG_NAME "")
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -63,12 +63,6 @@ endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/HardClipADAA/HardClipADAA/HelpSource/Classes" TYPE FILE FILES "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/HardClipADAA.schelp")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for each subdirectory.
-  include("/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/_deps/googletest-build/cmake_install.cmake")
-
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)

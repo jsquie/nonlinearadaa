@@ -1,16 +1,19 @@
 // Copyright 2024 James Squires
+//
+
 #pragma once
+
+#include <exception>
+#define PAR std::execution::par
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#include <Accelerate/Accelerate.h>
+#endif
 
 #include "./Utils.hpp"
 
-namespace FIRFilter {
-
-class FIRFilter {
-
-public:
-  FIRFilter() = {}
-
-
+namespace JSCDSP::FIRFilter {
 
 template <typename NumType>
 inline NumType zeroethOrderBessel(NumType x) {
@@ -27,6 +30,53 @@ inline NumType zeroethOrderBessel(NumType x) {
   }
 
   return besselValue;
+}
+
+double process_single_sample(double *circular_buf, double *kernel,
+                                     unsigned int kernel_size,
+                                     unsigned int pos) {
+  double result1 = 0.0;
+  double result2 = 0.0;
+
+#if TARGET_OS_MAC
+
+  vDSP_dotprD(&circular_buf[pos], -1, kernel, 1, &result1, pos + 1);
+  vDSP_dotprD(&circular_buf[kernel_size - 1], -1, &kernel[pos+1], 1, &result2, kernel_size - pos - 1);
+
+#else
+
+  std::vector<float> circ_part_1;
+
+  for (int i = static_cast<signed int>(pos); i >= 0; --i) {
+    circ_part_1.push_back(circ_buf[i]);
+  }
+
+  for (auto i = kernel_size - 1; i > pos; --i) {
+    circ_part_1.push_back(circ_buf[i]);
+  }
+
+  result1 = std::transform_reduce(PAR circ_part_1.begin(), circ_part_1.end(), kernel, 0.0f);
+
+#endif
+
+  return result1 + result2;
+}
+
+void linear_convolve(float *input, float *kernel, float* circ_buf, float* output,
+                                   const unsigned int &input_size,
+                                   const unsigned int &kernel_size) {
+
+  unsigned int pos = 0;
+
+  for (unsigned int i = 0; i < input_size + kernel_size - 1; ++i) {
+
+    circ_buf[pos] = (i < input_size) ? input[i] : 0.0;
+
+    output[i] = process_single_sample(circ_buf, kernel, kernel_size, pos);
+
+    pos = (++pos) % kernel_size;
+  }
+
 }
 
 // win is output buffer to write to, must be of size: sizeof(NumType) * M
@@ -109,20 +159,4 @@ NumType computeKaiserLength(NumType width, NumType alpha) {
                                (Constants::PI * width))));
 }
 
-// convolves input of buffer_size with filter kernel of kernel_size
-// places results in output
-template <typename NumType>
-void filterConvolve(NumType *input, NumType *kernel, NumType *output,
-                    unsigned int buffer_size, unsigned int kernel_size, int numSamples) {
-  for (int i = 0; i < numSamples, ++i) {
-    convolveSingleSample(input[i], , NumType *kernel, unsigned int kernel_size, unsigned int buffer_idx)
-  }
-}
-
-template <typename NumType>
-NumType convolveSingleSample(NumType sample, NumType *circular_buffer, NumType *kernel, unsigned int kernel_size, unsigned int buffer_idx) {
-
-}
-}
-
-}  // namespace FIRFilter
+}  // namespace JSCDSP::FIRFilter

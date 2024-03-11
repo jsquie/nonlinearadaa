@@ -65,16 +65,6 @@ CMAKE_BINARY_DIR = "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclip
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target test
-test:
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running tests..."
-	/opt/homebrew/Cellar/cmake/3.28.1/bin/ctest --force-new-ctest-process $(ARGS)
-.PHONY : test
-
-# Special rule for the target test
-test/fast: test
-.PHONY : test/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake cache editor..."
@@ -197,98 +187,6 @@ HardClipADAA_supernova/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_supernova.dir/build.make CMakeFiles/HardClipADAA_supernova.dir/build
 .PHONY : HardClipADAA_supernova/fast
 
-#=============================================================================
-# Target rules for targets named FIRFilterTests
-
-# Build rule for target.
-FIRFilterTests: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 FIRFilterTests
-.PHONY : FIRFilterTests
-
-# fast build rule for target.
-FIRFilterTests/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/FIRFilterTests.dir/build.make CMakeFiles/FIRFilterTests.dir/build
-.PHONY : FIRFilterTests/fast
-
-#=============================================================================
-# Target rules for targets named gmock
-
-# Build rule for target.
-gmock: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gmock
-.PHONY : gmock
-
-# fast build rule for target.
-gmock/fast:
-	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build
-.PHONY : gmock/fast
-
-#=============================================================================
-# Target rules for targets named gmock_main
-
-# Build rule for target.
-gmock_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gmock_main
-.PHONY : gmock_main
-
-# fast build rule for target.
-gmock_main/fast:
-	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build
-.PHONY : gmock_main/fast
-
-#=============================================================================
-# Target rules for targets named gtest
-
-# Build rule for target.
-gtest: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gtest
-.PHONY : gtest
-
-# fast build rule for target.
-gtest/fast:
-	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build
-.PHONY : gtest/fast
-
-#=============================================================================
-# Target rules for targets named gtest_main
-
-# Build rule for target.
-gtest_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gtest_main
-.PHONY : gtest_main
-
-# fast build rule for target.
-gtest_main/fast:
-	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build
-.PHONY : gtest_main/fast
-
-plugins/HardClipADAA/FilterDesign.o: plugins/HardClipADAA/FilterDesign.cpp.o
-.PHONY : plugins/HardClipADAA/FilterDesign.o
-
-# target to build an object file
-plugins/HardClipADAA/FilterDesign.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_scsynth.dir/build.make CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/FilterDesign.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_supernova.dir/build.make CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/FilterDesign.cpp.o
-.PHONY : plugins/HardClipADAA/FilterDesign.cpp.o
-
-plugins/HardClipADAA/FilterDesign.i: plugins/HardClipADAA/FilterDesign.cpp.i
-.PHONY : plugins/HardClipADAA/FilterDesign.i
-
-# target to preprocess a source file
-plugins/HardClipADAA/FilterDesign.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_scsynth.dir/build.make CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/FilterDesign.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_supernova.dir/build.make CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/FilterDesign.cpp.i
-.PHONY : plugins/HardClipADAA/FilterDesign.cpp.i
-
-plugins/HardClipADAA/FilterDesign.s: plugins/HardClipADAA/FilterDesign.cpp.s
-.PHONY : plugins/HardClipADAA/FilterDesign.s
-
-# target to generate assembly for a file
-plugins/HardClipADAA/FilterDesign.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_scsynth.dir/build.make CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/FilterDesign.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_supernova.dir/build.make CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/FilterDesign.cpp.s
-.PHONY : plugins/HardClipADAA/FilterDesign.cpp.s
-
 plugins/HardClipADAA/HardClipADAA.o: plugins/HardClipADAA/HardClipADAA.cpp.o
 .PHONY : plugins/HardClipADAA/HardClipADAA.o
 
@@ -370,30 +268,6 @@ plugins/HardClipADAA/Oversampling.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/HardClipADAA_supernova.dir/build.make CMakeFiles/HardClipADAA_supernova.dir/plugins/HardClipADAA/Oversampling.cpp.s
 .PHONY : plugins/HardClipADAA/Oversampling.cpp.s
 
-tests/FIRFilterTests.o: tests/FIRFilterTests.cpp.o
-.PHONY : tests/FIRFilterTests.o
-
-# target to build an object file
-tests/FIRFilterTests.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/FIRFilterTests.dir/build.make CMakeFiles/FIRFilterTests.dir/tests/FIRFilterTests.cpp.o
-.PHONY : tests/FIRFilterTests.cpp.o
-
-tests/FIRFilterTests.i: tests/FIRFilterTests.cpp.i
-.PHONY : tests/FIRFilterTests.i
-
-# target to preprocess a source file
-tests/FIRFilterTests.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/FIRFilterTests.dir/build.make CMakeFiles/FIRFilterTests.dir/tests/FIRFilterTests.cpp.i
-.PHONY : tests/FIRFilterTests.cpp.i
-
-tests/FIRFilterTests.s: tests/FIRFilterTests.cpp.s
-.PHONY : tests/FIRFilterTests.s
-
-# target to generate assembly for a file
-tests/FIRFilterTests.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/FIRFilterTests.dir/build.make CMakeFiles/FIRFilterTests.dir/tests/FIRFilterTests.cpp.s
-.PHONY : tests/FIRFilterTests.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -406,17 +280,8 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... test"
-	@echo "... FIRFilterTests"
 	@echo "... HardClipADAA_scsynth"
 	@echo "... HardClipADAA_supernova"
-	@echo "... gmock"
-	@echo "... gmock_main"
-	@echo "... gtest"
-	@echo "... gtest_main"
-	@echo "... plugins/HardClipADAA/FilterDesign.o"
-	@echo "... plugins/HardClipADAA/FilterDesign.i"
-	@echo "... plugins/HardClipADAA/FilterDesign.s"
 	@echo "... plugins/HardClipADAA/HardClipADAA.o"
 	@echo "... plugins/HardClipADAA/HardClipADAA.i"
 	@echo "... plugins/HardClipADAA/HardClipADAA.s"
@@ -426,9 +291,6 @@ help:
 	@echo "... plugins/HardClipADAA/Oversampling.o"
 	@echo "... plugins/HardClipADAA/Oversampling.i"
 	@echo "... plugins/HardClipADAA/Oversampling.s"
-	@echo "... tests/FIRFilterTests.o"
-	@echo "... tests/FIRFilterTests.i"
-	@echo "... tests/FIRFilterTests.s"
 .PHONY : help
 
 

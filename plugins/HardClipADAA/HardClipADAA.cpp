@@ -4,25 +4,17 @@
 //
 // Adapted from Chow DSP
 
-#include "./HardClipADAA.hpp"
-
-#include <assert.h>
-
-#include <algorithm>
+#include "HardClipADAA.hpp"
 #include <cmath>
-
-#include "FIRFilter.hpp"
 #include "Li2.hpp"
 #include "SC_PlugIn.hpp"
 #include "Utils.hpp"
 
 static InterfaceTable *ft;
 
-namespace TOL {
-constexpr double TOL = 1.0e-5;
-}
+namespace JSCDSP::ADAA {
 
-namespace ADAA {
+constexpr double TOL = 1.0e-5;
 
 template <typename Func, typename Ad_Func>
 static inline double next_first_adaa(const double &s, double *x1,
@@ -31,7 +23,7 @@ static inline double next_first_adaa(const double &s, double *x1,
   double ad1_x = first_ad(s);
   double diff = s - *x1;
 
-  if (std::abs(diff) <= TOL::TOL) {
+  if (std::abs(diff) <= TOL) {
     res = f(0.5 * (s + *x1));
   } else {
     res = (ad1_x - *ad1_x1) / diff;
@@ -52,7 +44,7 @@ inline double next_second_adaa(const double &s, double *x1, double *x2,
   double d1 = calcD(s, *x1, ad2_x0, *ad2_x1, f_first_ad, f_second_ad);
 
   // x_n - x_{n-1} <= epsilon, then use
-  if (std::abs(s - *x2) <= TOL::TOL) {  // fallback
+  if (std::abs(s - *x2) <= TOL) {  // fallback
     res = fallback(s, *x1, *x2, *ad2_x1, f, f_first_ad, f_second_ad);
   } else {
     res = (2.0 / (s - *x2)) * (d1 - *d2);
@@ -72,7 +64,7 @@ inline double calcD(const double &v0, const double &x1, double* ad2_x0,
                     FuncSecondAD f_second_ad) {
   *ad2_x0 = f_second_ad(v0);
 
-  if (std::abs(v0 - x1) <= TOL::TOL) {
+  if (std::abs(v0 - x1) <= TOL) {
     return f_first_ad(0.5 * (v0 + x1));
   } else {
     return (*ad2_x0 - ad2_x1) / (v0 - x1);
@@ -86,7 +78,7 @@ inline double fallback(const double &x, const double &x1, const double &x2,
   const double xbar = 0.5 * (x + x2);
   const double delta = xbar - x1;
 
-  if (std::abs(delta) <= TOL::TOL) {
+  if (std::abs(delta) <= TOL) {
     return f(0.5 * (xbar + x1));
   } else {
     return (2.0 / delta) *
@@ -94,17 +86,20 @@ inline double fallback(const double &x, const double &x1, const double &x2,
   }
 }
 
-}  // namespace ADAA
+enum AntiDerivativeLevel { First = 1, Second = 2 };
 
-namespace HardClipADAA {
+}  // namespace JSCDSP::ADAA
+
+
+namespace JSCDSP::HardClipADAA {
+
+
 
 HardClipADAA::HardClipADAA() {
-
-  Filter::FilterStructure fs;
-
-  // initialize Oversampling Object with desired oversampling rate 
-  // pass a struct that contains the required resources to call from SuperCollider
-  os.init(2, static_cast<int>(inBufferSize(0)), &fs);
+  // initialize Oversampling Object with desired oversampling rate
+  // pass a struct that contains the required resources to call from
+  // SuperCollider
+  os.init(2, static_cast<int>(inBufferSize(0)));
 
   // initialize the requirements returned from the os initialization
   // via RTAlloc
@@ -120,38 +115,7 @@ HardClipADAA::HardClipADAA() {
   next_aa(1);
 }
 
-HardClipADAA::~HardClipADAA() {
-  RTFree(mWorld, xv1);
-  RTFree(mWorld, yv1);
-  RTFree(mWorld, xv2);
-  RTFree(mWorld, yv2);
-  RTFree(mWorld, osBuffer);
-}
-
-inline double HardClipADAA::filter_next(double v, double *xv, double *yv) {
-  double out = 0.0;
-  int j;
-
-  for (j = 0; j < nzero; j++) {
-    xv[j] = xv[j + 1];
-  }
-  xv[nzero] = v / gain;
-
-  for (j = 0; j < npole; j++) {
-    yv[j] = yv[j + 1];
-  }
-
-  for (j = 0; j <= nzero; j++) {
-    out += xv[j] * bcoeff[j];
-  }
-
-  for (j = 0; j < npole; j++) {
-    out -= yv[j] * acoeff[j];
-  }
-  yv[npole] = out;
-
-  return out;
-}
+HardClipADAA::~HardClipADAA() {}
 
 inline double HardClipADAA::clip(const double &v) {
   return (std::abs(v) <= 1.0f) ? v : 1.0;
@@ -181,62 +145,35 @@ void HardClipADAA::next_aa(int nSamples) {
   // reset Oversampling for oversampling
   os.reset();
   // upsample
-  os.processSamplesUp(sig, nSamples);
+  os.processSamplesUp();
 
   // process
   for (double s : os.getProcessedSamples()) {
-    if (adlevel == ADAA::AntiDerivativeLevel::FirstOrder) {
-      osBuffer[i] = ADAA::next_first_adaa(s, &x1, &ad1_x1, HardClipADAA::clip,
-                                          HardClipADAA::hc_first_ad);
+    if (adlevel == JSCDSP::ADAA::AntiDerivativeLevel::First) {
+      s = JSCDSP::ADAA::next_first_adaa(s, &x1, &ad1_x1, HardClipADAA::clip,
+                                HardClipADAA::hc_first_ad);
 
-    } else if (adlevel == ADAA::AntiDerivativeLevel::SecondOrder) {
-      osBuffer[i] = ADAA::next_second_adaa(
-          s, &x1, &x2, &ad2_x0, &ad2_x1, &d2, HardClipADAA::clip,
-          HardClipADAA::hc_first_ad, HardClipADAA::hc_second_ad);
+    } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
+      s = JSCDSP::ADAA::next_second_adaa(s, &x1, &x2, &ad2_x0, &ad2_x1, &d2,
+                                 HardClipADAA::clip, HardClipADAA::hc_first_ad,
+                                 HardClipADAA::hc_second_ad);
     }
   }
 
   // filter again
   os.processSamplesDown();
+  auto down_sampled = os.getProcessedSamples();
 
-  for (double s : os.getProcessedSamples()) {
-    outbuf[i] = static_cast<float>(s);
+  for (unsigned int i = 0; i < nSamples; ++i) {
+    outbuf[i] = static_cast<float>(down_sampled[i]);
   }
 }
 
 }  // namespace HardClipADAA
 
-namespace TanhADAA {
+namespace JSCDSP::TanhADAA {
 
 TanhADAA::TanhADAA() {
-  fcoefs.gen_coefs(static_cast<int>(sampleRate()));
-
-  acoeff = fcoefs.acoeff;
-  bcoeff = fcoefs.bcoeff;
-  gain = *fcoefs.gain;
-
-  xv1 =
-      reinterpret_cast<double *>(RTAlloc(mWorld, (npole + 1) * sizeof(double)));
-  yv1 =
-      reinterpret_cast<double *>(RTAlloc(mWorld, (npole + 1) * sizeof(double)));
-  xv2 =
-      reinterpret_cast<double *>(RTAlloc(mWorld, (npole + 1) * sizeof(double)));
-  yv2 =
-      reinterpret_cast<double *>(RTAlloc(mWorld, (npole + 1) * sizeof(double)));
-
-  osBuffer = reinterpret_cast<double *>(
-      RTAlloc(mWorld, inBufferSize(0) * 2 * sizeof(double)));
-
-  assert(xv1 != nullptr);
-  assert(yv1 != nullptr);
-  assert(xv2 != nullptr);
-  assert(yv2 != nullptr);
-  assert(osBuffer != nullptr);
-
-  std::fill(&xv1[0], &xv1[npole + 1], 0.0);
-  std::fill(&yv1[0], &yv1[npole + 1], 0.0);
-  std::fill(&xv2[0], &xv2[npole + 1], 0.0);
-  std::fill(&yv2[0], &yv2[npole + 1], 0.0);
 
   x1 = 0.0;
   x2 = 0.0;
@@ -249,38 +186,7 @@ TanhADAA::TanhADAA() {
   next_aa(1);
 }
 
-TanhADAA::~TanhADAA() {
-  RTFree(mWorld, xv1);
-  RTFree(mWorld, yv1);
-  RTFree(mWorld, xv2);
-  RTFree(mWorld, yv2);
-  RTFree(mWorld, osBuffer);
-}
-
-inline double TanhADAA::filter_next(double v, double *xv, double *yv) {
-  double out = 0.0;
-  int j;
-
-  for (j = 0; j < nzero; j++) {
-    xv[j] = xv[j + 1];
-  }
-  xv[nzero] = v / gain;
-
-  for (j = 0; j < npole; j++) {
-    yv[j] = yv[j + 1];
-  }
-
-  for (j = 0; j <= nzero; j++) {
-    out += xv[j] * bcoeff[j];
-  }
-
-  for (j = 0; j < npole; j++) {
-    out -= yv[j] * acoeff[j];
-  }
-  yv[npole] = out;
-
-  return out;
-}
+TanhADAA::~TanhADAA() {}
 
 inline double TanhADAA::tanh_first_ad(const double &v) {
   return std::log(std::cosh(v));
@@ -295,55 +201,42 @@ inline double TanhADAA::tanh_second_ad(const double &v) {
 }
 
 void TanhADAA::next_aa(int nSamples) {
-  int i;
-  int twoNSamples = nSamples * 2;
-
   const float *sig = in(Input);
 
-  float *outbuf = out(Out1);
+  float *outbuf = (float *)out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
-  // upsample
-  for (i = 0; i < nSamples; ++i) {
-    osBuffer[i << 1] = static_cast<double>(sig[i]);
-    osBuffer[(i << 1) + 1] = 0.0;
-  }
 
-  // filter
-  for (i = 0; i < twoNSamples; ++i) {
-    osBuffer[i] = filter_next(osBuffer[i], xv1, yv1);
-  }
+  os.processSamplesUp();
 
   // process
-  for (i = 0; i < twoNSamples; ++i) {
-    if (adlevel == ADAA::AntiDerivativeLevel::FirstOrder) {
-      osBuffer[i] = ADAA::next_first_adaa(
-          osBuffer[i], &x1, &ad1_x1, [](double v) { return std::tanh(v); },
+  for (auto s : os.getProcessedSamples()) {
+    if (adlevel == JSCDSP::ADAA::AntiDerivativeLevel::First) {
+      s = JSCDSP::ADAA::next_first_adaa(
+          s, &x1, &ad1_x1, [](double v) { return std::tanh(v); },
           TanhADAA::tanh_first_ad);
 
-    } else if (adlevel == ADAA::AntiDerivativeLevel::SecondOrder) {
-      osBuffer[i] = ADAA::next_second_adaa(
-          osBuffer[i], &x1, &x2, &ad2_x0, &ad2_x1, &d2,
+    } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
+      s = JSCDSP::ADAA::next_second_adaa(
+          s, &x1, &x2, &ad2_x0, &ad2_x1, &d2,
           [](double v) { return std::tanh(v); }, TanhADAA::tanh_first_ad,
           TanhADAA::tanh_second_ad);
     }
   }
 
-  // filter again
-  for (i = 0; i < twoNSamples; ++i) {
-    osBuffer[i] = filter_next(osBuffer[i], xv2, yv2);
-  }
+  os.processSamplesDown();
 
+  auto down_sampled = os.getProcessedSamples();
   // downsample and out
-  for (i = 0; i < nSamples; ++i) {
-    outbuf[i] = static_cast<float>(osBuffer[i << 1]);
+  for (int i = 0; i < nSamples; ++i) {
+    outbuf[i] = static_cast<float>(down_sampled[i]);
   }
 }
 
-}  // namespace TanhADAA
+}  // namespace JSCDSP::TanhADAA
 
 PluginLoad(HardClipADAAUGens) {
   // Plugin magic
   ft = inTable;
-  registerUnit<HardClipADAA::HardClipADAA>(ft, "HardClipADAA", false);
-  registerUnit<TanhADAA::TanhADAA>(ft, "TanhADAA", false);
+  registerUnit<JSCDSP::HardClipADAA::HardClipADAA>(ft, "HardClipADAA", false);
+  registerUnit<JSCDSP::TanhADAA::TanhADAA>(ft, "TanhADAA", false);
 }

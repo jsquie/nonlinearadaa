@@ -1,30 +1,40 @@
-Start testing: Mar 08 13:47 PST
+Start testing: Mar 09 22:14 PST
 ----------------------------------------------------------
-1/1 Testing: FilterDesignTests.BasicAssertions
-1/1 Test: FilterDesignTests.BasicAssertions
-Command: "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FilterDesignTests" "--gtest_filter=FilterDesignTests.BasicAssertions" "--gtest_also_run_disabled_tests"
+1/1 Testing: ConvolveTests.BasicConvolve
+1/1 Test: ConvolveTests.BasicConvolve
+Command: "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/FIRFilterTests" "--gtest_filter=ConvolveTests.BasicConvolve" "--gtest_also_run_disabled_tests"
 Directory: /Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa
-"FilterDesignTests.BasicAssertions" start time: Mar 08 13:47 PST
+"ConvolveTests.BasicConvolve" start time: Mar 09 22:14 PST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = FilterDesignTests.BasicAssertions
+Note: Google Test filter = ConvolveTests.BasicConvolve
 [==========] Running 1 test from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 1 test from FilterDesignTests
-[ RUN      ] FilterDesignTests.BasicAssertions
-[       OK ] FilterDesignTests.BasicAssertions (0 ms)
-[----------] 1 test from FilterDesignTests (0 ms total)
+[----------] 1 test from ConvolveTests
+[ RUN      ] ConvolveTests.BasicConvolve
+/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/tests/FIRFilterTests.cpp:14: Failure
+Expected equality of these values:
+  output
+    Which is: 0x16f672868
+  result
+    Which is: 0x16f672850
+[  FAILED  ] ConvolveTests.BasicConvolve (0 ms)
+[----------] 1 test from ConvolveTests (0 ms total)
 
 [----------] Global test environment tear-down
 [==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 1 test.
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConvolveTests.BasicConvolve
+
+ 1 FAILED TEST
 <end of output>
-Test time =   0.00 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
-Test Passed.
-"FilterDesignTests.BasicAssertions" end time: Mar 08 13:47 PST
-"FilterDesignTests.BasicAssertions" time elapsed: 00:00:00
+Test Failed.
+"ConvolveTests.BasicConvolve" end time: Mar 09 22:14 PST
+"ConvolveTests.BasicConvolve" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Mar 08 13:47 PST
+End testing: Mar 09 22:14 PST
