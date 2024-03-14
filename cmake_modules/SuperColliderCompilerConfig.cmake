@@ -54,7 +54,7 @@ function(sc_config_compiler_flags target)
         # C5026: move ctor implicitly deleted
         # C5027: move assign implicitly deleted
         target_compile_options(${target} PUBLIC
-            $<$<BOOL:${STRICT}>:-Wall -WX -wd4820 -wd4514 -wd5026 -wd5027 -wd4626 -wd4625>
+          $<$<BOOL:${STRICT}>:-Wall -WX -wd4820 -wd4514 -wd5026 -wd5027 -wd4626 -wd4625> 
             )
     else()
         message(WARNING "Unknown compiler: ${CMAKE_CXX_COMPILER_ID}. You may want to modify SuperColliderCompilerConfig.cmake to add checks for SIMD flags and other optimizations.")

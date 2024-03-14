@@ -3,17 +3,26 @@
 
 #pragma once
 
-#include <exception>
-#define PAR std::execution::par
-
+#include <numeric>
 #ifdef __APPLE__
-#include <TargetConditionals.h>
 #include <Accelerate/Accelerate.h>
+#include <TargetConditionals.h>
+#else
+#define PAR std::execution::par
 #endif
+
+#include <iostream>
 
 #include "./Utils.hpp"
 
 namespace JSCDSP::FIRFilter {
+
+template <typename NumType>
+struct CircularBuffer {
+  NumType *data;
+  unsigned int pos;
+  unsigned int size;
+};
 
 template <typename NumType>
 inline NumType zeroethOrderBessel(NumType x) {
@@ -32,49 +41,62 @@ inline NumType zeroethOrderBessel(NumType x) {
   return besselValue;
 }
 
-double process_single_sample(double *circular_buf, double *kernel,
-                                     unsigned int kernel_size,
-                                     unsigned int pos) {
+double process_single_sample(CircularBuffer<double> cBuf, double *kernel,
+                             unsigned int kernel_size) {
   double result1 = 0.0;
   double result2 = 0.0;
 
-#if TARGET_OS_MAC
-
-  vDSP_dotprD(&circular_buf[pos], -1, kernel, 1, &result1, pos + 1);
-  vDSP_dotprD(&circular_buf[kernel_size - 1], -1, &kernel[pos+1], 1, &result2, kernel_size - pos - 1);
-
-#else
-
-  std::vector<float> circ_part_1;
-
-  for (int i = static_cast<signed int>(pos); i >= 0; --i) {
-    circ_part_1.push_back(circ_buf[i]);
-  }
-
-  for (auto i = kernel_size - 1; i > pos; --i) {
-    circ_part_1.push_back(circ_buf[i]);
-  }
-
-  result1 = std::transform_reduce(PAR circ_part_1.begin(), circ_part_1.end(), kernel, 0.0f);
-
-#endif
-
+  // std::cout << "Convolving single sample!" << std::endl;
   return result1 + result2;
 }
 
-void linear_convolve(float *input, float *kernel, float* circ_buf, float* output,
-                                   const unsigned int &input_size,
-                                   const unsigned int &kernel_size) {
+void linear_convolve(const float *input, double *kernel,
+                     CircularBuffer<double> circ_buf, double *output,
+                     const unsigned int &input_size,
+                     const unsigned int &kernel_size) {
+  assert(input != nullptr);
+  assert(kernel != nullptr);
+  assert(output != nullptr);
 
-  unsigned int pos = 0;
+  // std::cout << "Preparing to convolve signal" << std::endl;
+  // std::cout << "circ_buf:" << std::endl;
+  // for (auto i = 0u; i < kernel_size; ++i) {
+  // std::cout << circ_buf[i] << std::endl;
+  // }
+  double y = 0.0f;
+  double y2 = 0.0f;
 
-  for (unsigned int i = 0; i < input_size + kernel_size - 1; ++i) {
+  for (auto i = 0u; i < input_size; ++i) {
+    circ_buf.data[circ_buf.pos] = input[i];
 
-    circ_buf[pos] = (i < input_size) ? input[i] : 0.0;
+#if TARGET_OS_MAC
 
-    output[i] = process_single_sample(circ_buf, kernel, kernel_size, pos);
+    vDSP_dotprD(kernel + circ_buf.pos, 1, circ_buf.data, 1, &y,
+                kernel_size - circ_buf.pos);
+    vDSP_dotprD(kernel, 1, &circ_buf.data[kernel_size - circ_buf.pos], 1, &y2,
+                circ_buf.pos);
 
-    pos = (++pos) % kernel_size;
+#else
+
+// TODO: THIS IS NOT CORRECT -- needs to be fixed such that it is like above
+    std::vector<float> circ_part_1;
+
+    for (int i = static_cast<signed int>(cBuf.pos); i >= 0; --i) {
+      circ_part_1.push_back(cBuf.data[i]);
+    }
+
+    for (auto i = kernel_size - 1; i > cBuf.pos; --i) {
+      circ_part_1.push_back(cBuf.data[i]);
+    }
+
+    result1 = std::transform_reduce(PAR circ_part_1.begin(), circ_part_1.end(),
+                                    kernel, 0.0f);
+
+#endif
+
+    circ_buf.pos = circ_buf.pos == 0 ? kernel_size - 1 : circ_buf.pos - 1;
+
+    output[i] = y + y2;
   }
 
 }
@@ -103,32 +125,56 @@ void applyWindow(NumType *output, NumType *window, unsigned int length) {
   }
 }
 
+
 template <typename NumType>
-void buildSinc(NumType *output, unsigned int length, NumType cutoff,
+void buildSinc(NumType *output, int length, NumType cutoff,
                NumType fs) {
-  for (int n = 0; n < length; ++n) {
-    const NumType scaled_n = n - ((length - 1) / 2);
-    output[n] = std::sin(Constants::TWO_PI * cutoff * (scaled_n / fs)) /
-                (Constants::TWO_PI * scaled_n);
+  NumType n = 0.0 - static_cast<NumType>(length / 2);
+
+  for (auto i = 0; i < length; ++i) {
+    NumType pi_n = Constants::PI * n;
+    // std::cout << "pin: " << pi_n << std::endl;
+    output[i] = (i == length / 2) ? 1.0 : std::sin( pi_n * cutoff * (fs / 2) ) / pi_n;
+    n += 1.0;
   }
 }
 
+/**
+ * designFIRKaiserKernel takes desired characteristics of
+ * FIR window and returns the calculated kernel coefficients
+ * in the output buffer
+ * \param: output -- size M -- populated with filter coefficients
+ * \param: window -- size M -- used for storing window values
+ * \param: fs -- current sample rate
+ * \param M -- size of kernel
+ * \param shape -- beta value of kaiser window
+ **/
 // results in normalized filter kernel stored in output
 template <typename NumType>
 void designFIRKaiserKernel(NumType *output, NumType *window, NumType fs,
                            unsigned int M, NumType shape) {
   auto normalized_cutoff = fs / 4;
-  buildSinc<NumType>(output, M, normalized_cutoff, fs);
+  // TODO: fix normalized cutoff value
+  buildSinc<NumType>(output, M, 0.01, fs);
+  // std::cout << "After build sinc" << std::endl;
+  // for (auto n = 0u; n < M; ++n) {
+    // std::cout << output[n] << std::endl;
+  // }
   buildWindow<NumType>(window, M, shape);
+  // std::cout << "After build window" << std::endl;
+  // for (auto n = 0u; n < M; ++n) {
+    // std::cout << window[n] << std::endl;
+  // }
   applyWindow<NumType>(output, window, M);
 
   NumType sum = 0.0;
 
   // normalize for 1 at DC
-  for (unsigned int n = 0; n < M; ++n) {
+  for (auto n = 0u; n < M; ++n) {
+    // std::cout << "output before norm: " << output[n] << std::endl;
     sum += output[n];
   }
-  for (unsigned int n = 0; n < M; ++n) {
+  for (auto n = 0u; n < M; ++n) {
     output[n] /= sum;
   }
 }
@@ -154,9 +200,10 @@ NumType computeKaiserBeta(NumType passband_attenuation) {
 // given normalized width (between 0 and 0.5)
 // and alpha (desired passband attenuation)
 template <typename NumType>
-NumType computeKaiserLength(NumType width, NumType alpha) {
-  return (1.0 + (2 * std::sqrt((Constants::PI_SQRD + (alpha * alpha)) /
-                               (Constants::PI * width))));
+unsigned int computeKaiserLength(NumType width, NumType alpha) {
+  return static_cast<unsigned int>(
+      (1.0 + (2 * std::sqrt((Constants::PI_SQRD + (alpha * alpha)) /
+                            (Constants::PI * width)))));
 }
 
 }  // namespace JSCDSP::FIRFilter

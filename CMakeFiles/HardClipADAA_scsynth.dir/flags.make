@@ -4,7 +4,7 @@
 # compile CXX with /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
 CXX_DEFINES = -DHardClipADAA_scsynth_EXPORTS -DNOVA_SIMD
 
-CXX_INCLUDES = -I/Users/jamessquires/SuperCollider/supercollider/external_libraries/nova-simd -I/Users/jamessquires/SuperCollider/supercollider/include/plugin_interface -I/Users/jamessquires/SuperCollider/supercollider/include/common -I/Users/jamessquires/SuperCollider/supercollider/common
+CXX_INCLUDES = -I/Users/jamessquires/SuperCollider/supercollider/external_libraries/nova-simd -I/Users/jamessquires/SuperCollider/supercollider/include/plugin_interface -I/Users/jamessquires/SuperCollider/supercollider/include/common -I/Users/jamessquires/SuperCollider/supercollider/common -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks
 
 CXX_FLAGSarm64 = -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -fPIC -fvisibility=hidden
 

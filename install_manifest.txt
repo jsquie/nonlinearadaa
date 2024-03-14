@@ -1,4 +1,4 @@
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install/HardClipADAA/HardClipADAA/HardClipADAA_scsynth.scx
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install/HardClipADAA/HardClipADAA/HardClipADAA_supernova.scx
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install/HardClipADAA/HardClipADAA/Classes/HardClipADAA.sc
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install/HardClipADAA/HardClipADAA/HelpSource/Classes/HardClipADAA.schelp
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/HardClipADAA_scsynth.scx
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/HardClipADAA_supernova.scx
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/Classes/HardClipADAA.sc
+/Users/jamessquires/Library/Application Support/SuperCollider/Extensions/HardClipADAA/HardClipADAA/HelpSource/Classes/HardClipADAA.schelp

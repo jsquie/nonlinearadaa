@@ -14,6 +14,9 @@
 # EXTERNAL cache entries
 ########################
 
+//Path to a library.
+ACCELERATE_FRAMEWORK:FILEPATH=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/Accelerate.framework
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=CMAKE_ADDR2LINE-NOTFOUND
 
@@ -90,8 +93,8 @@ CMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=/Users/jamessquires/Music Dev/test_sc_pl
 //Path to a program.
 CMAKE_INSTALL_NAME_TOOL:FILEPATH=/usr/bin/install_name_tool
 
-//Install prefix
-CMAKE_INSTALL_PREFIX:PATH=/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install
+//Install path prefix, prepended onto install directories.
+CMAKE_INSTALL_PREFIX:PATH=/Users/jamessquires/Library/Application Support/SuperCollider/Extensions
 
 //Path to a program.
 CMAKE_LINKER:FILEPATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
@@ -234,6 +237,9 @@ SCSYNTH:BOOL=ON
 //Path to SuperCollider source. Relative paths are treated as relative
 // to this script
 SC_PATH:PATH=/Users/jamessquires/SuperCollider/supercollider
+
+//No help, variable specified on the command line.
+SET_CPP_FLAGS:UNINITIALIZED=-framework Accelerate
 
 //Use strict warning flags
 STRICT:BOOL=OFF

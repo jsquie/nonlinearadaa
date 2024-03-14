@@ -1,104 +1,114 @@
 // Copyright 2024 James Squires
+#ifdef __APPLE__
+#include <Accelerate/Accelerate.h>
+#include <TargetConditionals.h>
+#endif
+
+#include <algorithm>
 
 #include "Oversampling.hpp"
+#include "OversamplingStage.hpp"
 
-#include <assert.h>
-
-#include <iostream>
-#include <stdexcept>
-
-namespace JSCDSP::Oversampling {
+namespace Oversampling {
 
 Oversampling::~Oversampling() {
-  std::cout << "Deleting this Oversampling object" << std::endl;
-}
-
-void Oversampling::reset() {}
-
-void Oversampling::init(const int& factor, const int& buffer_size) {
-  std::cout << "Initializing the oversampling object!" << std::endl;
-  factorOversampling = factor;
-
-  for (int n = 0; n < factor; ++n) {
-    auto twUp = 0.12f * (n == 0 ? 0.5f : 1.0f);
-    auto twDown = 0.15f * (n == 0 ? 0.5f : 1.0f);
-
-    auto gaindBStartUp = -70.0f;
-    auto gaindBStartDown = -60.0f;
-    auto gaindBFactorUp = 8.0f;
-    auto gaindBFactorDown = 8.0f;
-    
-    // design these filters
-    // start with these specs
-
-    /**
-    addOverSamplingStage(
-        twUp, gaindBStartUp + gaindBFactorUp * static_cast<float>(n), twDown,
-        gaindBStartDown + gaindBFactorDown * static_cast<float>(n));
-        **/
+  delete[] osBuffer;
+  // delete[] up_sample_stages;
+  // delete[] down_sample_stages;
+  for (auto i = 0; i < factor / 2; ++i) {
+    delete up_sample_stages[i];
+    delete down_sample_stages[i];
   }
-}
+};
 
-void Oversampling::addOverSamplingStage(float normalizedTransitionWidthUp,
-                                        float stopbandAmplitudeBUp,
-                                        float normalizedTransitionWidthDown,
-                                        float stopbandAmplitudeBDown) {
-  std::cout << "Adding a over sampling stage!" << std::endl;
-  throw std::logic_error("addOverSamplingStage not yet implemented yet!");
-}
-
-void Oversampling::processSamplesUp() {
-  std::cout << "Processing samples Up! From the Oversampling class itself"
-            << std::endl;
-  throw std::logic_error("processSamplesUp not yet implemented yet!");
-  /**
-  // initial stage uses inputBlock
-  // essentially a dumby os stage that does nothing
-  for (int i = 0; i < size; ++i) {
-    assert((*stages)[0]->buffer != nullptr);
-    assert((*stages)[0]->buffer);
-    // std::cout << "Adding inputBlock[i]: " << inputBlock[i] << " to
-    // stages[0].buffer" << std::endl;
-
-    (*stages)[0]->buffer->push_back(static_cast<double>(inputBlock[i]));
+void Oversampling::init(const int &newFactor, const int &numSamples,
+                        const int &filter_kernel_size,
+                        const double *&filter_kernel) {
+  factor = newFactor;
+  nSamples = numSamples;
+  M = filter_kernel_size;
+  fKernelBuf = filter_kernel;
+  osBuffer = new double[nSamples * factor];
+  for (auto i = 0; i < factor / 2; ++i) {
+    double *allocated_data_up = new double[M];
+    double *allocated_data_down = new double[M];
+    up_sample_stages[i] = new OversamplingStage(M, allocated_data_up);
+    down_sample_stages[i] = new OversamplingStage(M, allocated_data_down);
   }
+};
 
-  std::cout
-      << "Added inputBlock data to initial stage. On to processing stages up"
-      << std::endl;
+void Oversampling::processSamplesUp(const double *&input) {
+  for (int n = 0; n < nSamples; ++n) {
+    for (int j = 0; j < factor / 2; ++j) {
+      up_sample_stages[j]->y0 = 0.0f;
+      up_sample_stages[j]->y1 = 0.0f;
 
-  for (int i = 1; i < numStages; ++i) {
-    assert(stages != nullptr);
-    assert(stages);
-    auto prev = (*stages)[i - 1]->buffer;
-    assert(prev != nullptr);
-    assert(prev);
-    (*stages)[i]->processSamplesUp(*prev);
+      up_sample_stages[j]->data[up_sample_stages[j]->pos] =
+          static_cast<double>(input[n]);
+
+#if TARGET_OS_MAC
+
+      vDSP_dotprD(fKernelBuf + up_sample_stages[j]->pos, 2,
+                  up_sample_stages[j]->data, 1, &up_sample_stages[j]->y0,
+                  (up_sample_stages[j]->size - up_sample_stages[j]->pos) / 2);
+      vDSP_dotprD(
+          fKernelBuf, 2,
+          &up_sample_stages[j]
+               ->data[up_sample_stages[j]->size - up_sample_stages[j]->pos],
+          1, &up_sample_stages[j]->y1, (up_sample_stages[j]->pos) / 2);
+
+#endif
+
+      up_sample_stages[j]->pos = (up_sample_stages[j]->pos == 0)
+                                     ? up_sample_stages[j]->size - 1
+                                     : up_sample_stages[j]->pos - 1;
+      osBuffer[(n << 1) + j] =
+          up_sample_stages[j]->y0 + up_sample_stages[j]->y1;
+    }
   }
+};
 
-  justProcessed = Processed::Up;
-       **/
-}
+void Oversampling::processSamplesDown(float *&output) {
+  for (int n = 0; n < nSamples; ++n) {
+    // initialize output sample n
+    output[n] = 0.0f;
 
-void Oversampling::processSamplesDown() {
-  justProcessed = Processed::Down;
-  throw std::logic_error("processSamplesDown not yet implemented yet!");
-}
+    for (int j = 0; j < factor / 2; ++j) {
+      // initialize calcs for CircularBuffer
+      down_sample_stages[j]->y0 = 0.0f;
+      down_sample_stages[j]->y1 = 0.0f;
 
-std::vector<double> Oversampling::getProcessedSamples() {
-  // std::cout << "Getting OS processed samples" << std::endl;
-  // std::cout << "stages front buffer[0]: " <<
-  // (*stages->back()).buffer->front() << std::endl;
-  // assert(!(*stages->back()).buffer->empty());
-  throw std::logic_error("getProcessedSamples not yet implemented!");
-  /**  This does not work for more than 2x oversampling
-  (justProcessed == Processed::Up)
-      ? assert((*stages->back()).buffer != nullptr)
-      : assert((*stages->front()).buffer != nullptr);
-  return (justProcessed == Processed::Up) ? *(*stages->back()).buffer
-                                          : *(*stages->front()).buffer;
-  **/
-}
+      // take every jth sample
+      down_sample_stages[j]->data[down_sample_stages[j]->pos] =
+          osBuffer[(n << 1) + j];
 
+#if TARGET_OS_MAC
 
-}  // namespace JSCDSP::Oversampling
+      // dot product every jth sample with every jth kernel value
+      // TODO: how does increment change with factor > 2?
+      vDSP_dotprD(fKernelBuf + down_sample_stages[j]->pos, 2,
+                  down_sample_stages[j]->data, 1, &down_sample_stages[j]->y0,
+                  (M - down_sample_stages[j]->pos) / 2);
+      vDSP_dotprD(fKernelBuf, 2,
+                  &down_sample_stages[j]->data[M - down_sample_stages[j]->pos],
+                  1, &down_sample_stages[j]->y1,
+                  (down_sample_stages[j]->pos) / 2);
+
+#endif
+
+      // iterate position arguments -- keep it bounded between 0 and size
+      down_sample_stages[j]->pos = (down_sample_stages[j]->pos == 0)
+                                       ? down_sample_stages[j]->size - 1
+                                       : down_sample_stages[j]->pos - 1;
+
+      // increment outbuf[n], because we will have factor number of
+      // contributions to outbuf[n]
+      output[n] += static_cast<float>(down_sample_stages[j]->y0 +
+                                      down_sample_stages[j]->y1);
+    }
+  }
+};
+
+double *Oversampling::getProcessedSamples() { return osBuffer; }
+
+}  // namespace Oversampling

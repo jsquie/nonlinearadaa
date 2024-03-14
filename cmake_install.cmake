@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/install")
+  set(CMAKE_INSTALL_PREFIX "/Users/jamessquires/Library/Application Support/SuperCollider/Extensions")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

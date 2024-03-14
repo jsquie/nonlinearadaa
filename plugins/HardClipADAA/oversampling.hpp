@@ -1,43 +1,39 @@
 // Limited implementation of oversampling
-// Adapted from JUCE by James Squires
-// https://github.com/juce-framework/JUCE/blob/master/modules/juce_dsp/processors/juce_Oversampling.h
 
 #pragma once
 
-#include "./Filter.hpp"
-#include <memory>
+#include "OversamplingStage.hpp"
 
 
-namespace JSCDSP::Oversampling {
+namespace Oversampling {
+
 
 class Oversampling {
  public:
-  Oversampling() = default;
 
   ~Oversampling();
 
+  void init(const int& newFactor, const int& numSamples, const int& filter_kernel_size, const double*&filter_kernel);
 
-  void reset();
-  void init(const int& factor, const int& buffer_size);
+  void processSamplesUp(const double* &input);
 
-  void addOverSamplingStage(float normalizedTransitionWidthUp,
-                            float stopbandAmplitudeBUp,
-                            float normalizedTransitionWidthDown,
-                            float stopbandAmplitudeBDown);
+  void processSamplesDown(float* &output);
 
-  void processSamplesUp();
-  void processSamplesDown();
-  std::vector<double> getProcessedSamples();
-  void createFilters();
-  Filter::FilterStructure<double>* getFilterStructures() { return filterStructures; };
+  double* getProcessedSamples();
 
-  // int numChannels = 1;
+
  private:
-  enum Processed { Up = true, Down = false };
-  bool justProcessed{Processed::Up};
-  int factorOversampling{2};
-  int numStages{0};
-  Filter::FilterStructure<double>* filterStructures;
+
+  OversamplingStage* up_sample_stages[8];
+  OversamplingStage* down_sample_stages[8];
+
+  int factor;
+  int nSamples;
+  int M;
+
+  double* osBuffer;
+  const double* fKernelBuf;
+
 };
 
 

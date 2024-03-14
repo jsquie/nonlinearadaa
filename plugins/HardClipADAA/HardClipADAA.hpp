@@ -4,33 +4,33 @@
 
 #pragma once
 
-#include "Oversampling.hpp"
+#include "FIRFilter.hpp"
 #include "SC_PlugIn.hpp"
+#include "Oversampling.hpp"
 
 namespace JSCDSP::ADAA {
 
 template <typename Func, typename Ad_Func>
-static inline double next_first_adaa(const double &s, double *x1,
-                                     double *ad1_x1, Func f, Ad_Func first_ad);
+static inline double next_first_adaa(const double& s, double* x1,
+                                     double* ad1_x1, Func f, Ad_Func first_ad);
 
 template <typename Func, typename FuncFirstAD, typename FuncSecondAD>
-inline double next_second_adaa(const double &s, double *x1, double *x2,
-                               double *ad2_x0, double *ad2_x1, double *d2,
+inline double next_second_adaa(const double& s, double* x1, double* x2,
+                               double* ad2_x0, double* ad2_x1, double* d2,
                                Func f, FuncFirstAD f_first_ad,
                                FuncSecondAD f_second_ad);
 
-
 template <typename FuncFirstAD, typename FuncSecondAD>
-inline double calcD(const double &v0, const double &x1, double* ad2_x0,
-                    const double &ad2_x1, FuncFirstAD f_first_ad,
+inline double calcD(const double& v0, const double& x1, double* ad2_x0,
+                    const double& ad2_x1, FuncFirstAD f_first_ad,
                     FuncSecondAD f_second_ad);
 
 template <typename Func, typename FuncFirstAD, typename FuncSecondAD>
-inline double fallback(const double &x, const double &x1, const double &x2,
-                       const double &ad2_x1, Func f, FuncFirstAD f_first_ad,
+inline double fallback(const double& x, const double& x1, const double& x2,
+                       const double& ad2_x1, Func f, FuncFirstAD f_first_ad,
                        FuncSecondAD f_second_ad);
 
-} // namespace JSCDSP::ADAA
+}  // namespace JSCDSP::ADAA
 
 namespace JSCDSP::HardClipADAA {
 
@@ -49,6 +49,18 @@ class HardClipADAA : public SCUnit {
   static inline double hc_second_ad(const double& v);
   inline double filter_next(double v, double* xv, double* yv);
 
+  double* osBuffer;
+
+  Oversampling::Oversampling os;
+
+  double* kWindowBuf;
+  double* fKernelBuf;
+  FIRFilter::CircularBuffer<double>* stage_0;
+  FIRFilter::CircularBuffer<double>* stage_1;
+  double* fOutput;
+
+  unsigned int M;
+
   double x1;
   double ad1_x1;
   double x2;
@@ -56,27 +68,11 @@ class HardClipADAA : public SCUnit {
   double ad2_x1;
   double ad2_x0;
 
-  double* osBuffer;
-
-  const int npole = 4;
-  const int nzero = 4;
-  // for samplerate == 48000
-  const double* acoeff;
-  const double* bcoeff;
-  double gain;
-
-  double* xv1;
-  double* yv1;
-  double* xv2;
-  double* yv2;
-
   float* dbup;
   float* down1;
   float* dbdown;
 
-  Oversampling::Oversampling os;
-  double* filter_kernel_buf;
-  double* window_buf;
+
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };
@@ -106,21 +102,10 @@ class TanhADAA : public SCUnit {
   double ad2_x1;
   double ad2_x0;
 
-  Oversampling::Oversampling os;
-
-  double* osBuffer;
-
-  const int npole = 4;
-  const int nzero = 4;
-  // for samplerate == 48000
-  const double* acoeff;
-  const double* bcoeff;
-  double gain;
-
-  double* xv1;
-  double* yv1;
-  double* xv2;
-  double* yv2;
+  double* kWindowBuf;
+  double* fKernelBuf;
+  double* cBuf;
+  double* fOutput;
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };
