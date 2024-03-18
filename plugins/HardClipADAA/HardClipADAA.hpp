@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "FIRFilter.hpp"
 #include "SC_PlugIn.hpp"
 #include "Oversampling.hpp"
+#include <memory>
+#include <vector>
+
 
 namespace JSCDSP::ADAA {
 
@@ -50,15 +52,9 @@ class HardClipADAA : public SCUnit {
   inline double filter_next(double v, double* xv, double* yv);
 
   double* osBuffer;
-
+  std::vector<std::vector<double>> oversample_stages;
+  std::vector<std::shared_ptr<double[]>> kernels;
   Oversampling::Oversampling os;
-
-  double* kWindowBuf;
-  double* fKernelBuf;
-  FIRFilter::CircularBuffer<double>* stage_0;
-  FIRFilter::CircularBuffer<double>* stage_1;
-  double* fOutput;
-
   unsigned int M;
 
   double x1;
@@ -67,12 +63,6 @@ class HardClipADAA : public SCUnit {
   double d2;
   double ad2_x1;
   double ad2_x0;
-
-  float* dbup;
-  float* down1;
-  float* dbdown;
-
-
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };
@@ -101,11 +91,6 @@ class TanhADAA : public SCUnit {
   double d2;
   double ad2_x1;
   double ad2_x0;
-
-  double* kWindowBuf;
-  double* fKernelBuf;
-  double* cBuf;
-  double* fOutput;
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };

@@ -2,39 +2,34 @@
 
 #pragma once
 
-#include "OversamplingStage.hpp"
+#include <vector>
 
+#include "OversamplingStage.hpp"
 
 namespace Oversampling {
 
-
 class Oversampling {
  public:
+  void init(const int& initOSFactor, const int& initNSamples, const int& M);
 
-  ~Oversampling();
+  double convolve(const double& input, OversamplingStage& stage,
+                  std::shared_ptr<double[]> const& kernel);
 
-  void init(const int& newFactor, const int& numSamples, const int& filter_kernel_size, const double*&filter_kernel);
+  void processSamplesUp(const float* const& input,
+                        std::vector<std::shared_ptr<double[]>>& kernels,
+                        std::vector<double>&osBuffer);
 
-  void processSamplesUp(const double* &input);
-
-  void processSamplesDown(float* &output);
-
-  double* getProcessedSamples();
-
+  void processSamplesDown(float* const& output,
+                          std::vector<std::shared_ptr<double[]>>& kernels,
+                          double* const& osBuffer);
 
  private:
-
-  OversamplingStage* up_sample_stages[8];
-  OversamplingStage* down_sample_stages[8];
+  std::vector<OversamplingStage> up_sample_stages;
+  std::vector<OversamplingStage> down_sample_stages;
 
   int factor;
   int nSamples;
   int M;
-
-  double* osBuffer;
-  const double* fKernelBuf;
-
 };
 
-
-} // namespace JSCDSP::Oversampling
+}  // namespace Oversampling

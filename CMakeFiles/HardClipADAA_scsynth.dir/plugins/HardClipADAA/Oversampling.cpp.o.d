@@ -1403,5 +1403,6 @@ CMakeFiles/HardClipADAA_scsynth.dir/plugins/HardClipADAA/Oversampling.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/IOSurface.framework/Headers/IOSurfaceAPI.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/IOSurface.framework/Headers/IOSurfaceTypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks/IOSurface.framework/Headers/IOSurfaceRef.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/usr/include/c++/v1/iostream \
   /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/Oversampling.hpp \
   /Users/jamessquires/Music\ Dev/test_sc_plugin_cookie/hardclipadaa/plugins/HardClipADAA/OversamplingStage.hpp

@@ -1,0 +1,97 @@
+// Copyright 2024 James Squires
+#ifdef __APPLE__
+#include <Accelerate/Accelerate.h>
+#include <TargetConditionals.h>
+#endif
+
+#include "Oversampling.hpp"
+#include "OversamplingStage.hpp"
+
+namespace Oversampling {
+
+double Oversampling::convolve(const double &input, OversamplingStage &stage, std::shared_ptr<double[]> kernel) {
+  stage.y0 = 0.0f;
+  stage.y1 = 0.0f;
+
+  stage.data[stage.pos] = input;
+
+  int first_inner_prods = stage.size - stage.pos;
+
+#if TARGET_OS_MAC
+
+  vDSP_dotprD(kernel.get() + stage.pos, 1, stage.data.get(), 1, &stage.y0,
+             first_inner_prods);
+  vDSP_dotprD(kernel.get(), 1, &stage.data.get()[stage.size - stage.pos], 1, &stage.y1,
+             stage.pos);
+
+#endif
+
+  stage.pos = (stage.pos == 0) ? stage.size - 1 : stage.pos - 1;
+  return stage.y0 + stage.y1;
+}
+
+void Oversampling::processSamplesUp(const float *&input,
+                                    std::vector<std::shared_ptr<double[]>> kernels,
+                                    double *&osBuffer) {
+
+  assert(input != nullptr);
+  assert(osBuffer != nullptr);
+
+  for (int n = 0; n < nSamples; ++n) {
+    for (int j = 0; j < factor; ++j) {
+
+      // std::cout << "Processing upsample stage: " << j << " with kernel: " <<
+      // (j << 1) << std::endl;
+      osBuffer[(n << 1) + j] = convolve(static_cast<double>(input[n]), up_sample_stages.at(j), kernels.at(j));
+    }
+  }
+};
+
+/**
+void Oversampling::processSamplesDown(float *&output,
+                                      double *filter_kernels[16],
+                                      double *&osBuffer) {
+  assert(output != nullptr);
+  assert(osBuffer != nullptr);
+
+  for (int n = 0; n < nSamples; ++n) {
+    // initialize output sample n
+    output[n] = 0.0f;
+
+    for (int j = 0; j < factor; ++j) {
+      // initialize calcs for CircularBuffer
+      down_sample_stages[j]->y0 = 0.0f;
+      down_sample_stages[j]->y1 = 0.0f;
+
+      assert(filter_kernels[(j << 1) + 1] != nullptr);
+      // take every jth sample
+      down_sample_stages[j]->data[down_sample_stages[j]->pos] =
+          osBuffer[(n << 1) + j];
+
+#if TARGET_OS_MAC
+
+      // dot product every jth sample with every jth kernel value
+      vDSP_dotprD(filter_kernels[(j << 1) + 1] + down_sample_stages[j]->pos, 1,
+                  down_sample_stages[j]->data, 1, &down_sample_stages[j]->y0,
+                  M - down_sample_stages[j]->pos);
+      vDSP_dotprD(filter_kernels[(j << 1) + 1], 1,
+                  &down_sample_stages[j]->data[M - down_sample_stages[j]->pos],
+                  1, &down_sample_stages[j]->y1, down_sample_stages[j]->pos);
+
+#endif
+
+      // iterate position arguments -- keep it bounded between 0 and size
+      down_sample_stages[j]->pos = (down_sample_stages[j]->pos == 0)
+                                       ? down_sample_stages[j]->size - 1
+                                       : down_sample_stages[j]->pos - 1;
+
+      // increment outbuf[n], because we will have factor number of
+      // contributions to outbuf[n]
+      output[n] += static_cast<float>(down_sample_stages[j]->y0 +
+                                      down_sample_stages[j]->y1);
+    }
+  }
+};
+**/
+
+}  // namespace Oversampling
