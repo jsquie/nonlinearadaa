@@ -1,209 +1,102 @@
 // Copyright 2024 James Squires
-//
-
-#pragma once
-
-#include <numeric>
-#ifdef __APPLE__
-#include <Accelerate/Accelerate.h>
-#include <TargetConditionals.h>
-#else
-#define PAR std::execution::par
-#endif
-
+#include <execution>
 #include <iostream>
+#include <numeric>
 
-#include "./Utils.hpp"
+namespace FIRFilter {
 
-namespace JSCDSP::FIRFilter {
+constexpr int FILTER_TAP_NUM = 209;
 
-template <typename NumType>
-struct CircularBuffer {
-  NumType *data;
-  unsigned int pos;
-  unsigned int size;
-};
+constexpr double filter_taps[FILTER_TAP_NUM] = {
+    -0.0016550762341430308,  -0.0041665939310652385,  -0.003594191447486389,
+    0.00251719066089494,     0.009204232105743072,    0.00891685978767867,
+    0.0025929990340545586,   -0.0009241688686624757,  0.001780417290846837,
+    0.0040583237055417075,   0.0012718880881058892,   -0.0015563530079133385,
+    0.0002721535795504213,   0.0025035930967126315,   0.0005429619868192588,
+    -0.0017453123023537607,  0.000022984138603901914, 0.0020537985664696805,
+    0.00013860481511378278,  -0.0018438080070986866,  0.00013467879098560712,
+    0.001974941764859404,    -0.00018853242904265353, -0.0019542465345495637,
+    0.0003762055310051086,   0.0020296451360248486,   -0.0005169276482732894,
+    -0.0020684792621014857,  0.0006994817682676137,   0.0021265551428543772,
+    -0.0008822257189953905,  -0.0021674203444939926,  0.0010935813680486932,
+    0.0022115890943483034,   -0.001314750098015205,   -0.0022412051839012007,
+    0.0015560490952100908,   0.0022569517475881764,   -0.0018209974880386698,
+    -0.002266301757028872,   0.0020937340035129225,   0.0022477597114187653,
+    -0.0023927521827856475,  -0.0022146568586112986,  0.0027050436381634005,
+    0.002156314932451038,    -0.003031065300689767,   -0.002064650858536239,
+    0.0033792643077078716,   0.0019474808728353638,   -0.0037376568321684455,
+    -0.0017910129887243696,  0.004112825480457824,    0.0015960522407615228,
+    -0.004502958711563328,   -0.0013612537988873558,  0.004903329017739637,
+    0.001079361495260796,    -0.005313440162938722,   -0.000745420496662418,
+    0.00573623700664673,     0.00036334614253456674,  -0.006156309094600619,
+    0.00008808856155454664,  0.006589753951165301,    -0.0005956547623096374,
+    -0.007014724209099923,   0.0011845526388683388,   0.007445042007534717,
+    -0.0018497468084161031,  -0.007868705069367566,   0.0026066792019242466,
+    0.008285357331304153,    -0.0034688911024595,     -0.008698582991922315,
+    0.0044411237414403925,   0.009092986565733343,    -0.005557414337636592,
+    -0.009483553419766278,   0.006823202063313745,    0.009848519291251277,
+    -0.008289679120818303,   -0.010201859443027823,   0.009988471477688032,
+    0.01053012360277123,     -0.011992197126080751,   -0.010834696922933549,
+    0.014396832948754698,    0.011115959799250405,    -0.017345990204051556,
+    -0.01136588090176962,    0.021087101188298568,    0.01158952167903816,
+    -0.026030444783605375,   -0.011780011049371056,   0.03296919343261422,
+    0.011939078466010828,    -0.04359427254454018,    -0.012063942524891857,
+    0.0623135104924757,      0.012154411619644348,    -0.10529117509190798,
+    -0.01220839945864449,    0.3180391210647029,      0.5122272478248557,
+    0.3180391210647029,      -0.01220839945864449,    -0.10529117509190798,
+    0.012154411619644348,    0.0623135104924757,      -0.012063942524891857,
+    -0.04359427254454018,    0.011939078466010828,    0.03296919343261422,
+    -0.011780011049371056,   -0.026030444783605375,   0.01158952167903816,
+    0.021087101188298568,    -0.01136588090176962,    -0.017345990204051556,
+    0.011115959799250405,    0.014396832948754698,    -0.010834696922933549,
+    -0.011992197126080751,   0.01053012360277123,     0.009988471477688032,
+    -0.010201859443027823,   -0.008289679120818303,   0.009848519291251277,
+    0.006823202063313745,    -0.009483553419766278,   -0.005557414337636592,
+    0.009092986565733343,    0.0044411237414403925,   -0.008698582991922315,
+    -0.0034688911024595,     0.008285357331304153,    0.0026066792019242466,
+    -0.007868705069367566,   -0.0018497468084161031,  0.007445042007534717,
+    0.0011845526388683388,   -0.007014724209099923,   -0.0005956547623096374,
+    0.006589753951165301,    0.00008808856155454664,  -0.006156309094600619,
+    0.00036334614253456674,  0.00573623700664673,     -0.000745420496662418,
+    -0.005313440162938722,   0.001079361495260796,    0.004903329017739637,
+    -0.0013612537988873558,  -0.004502958711563328,   0.0015960522407615228,
+    0.004112825480457824,    -0.0017910129887243696,  -0.0037376568321684455,
+    0.0019474808728353638,   0.0033792643077078716,   -0.002064650858536239,
+    -0.003031065300689767,   0.002156314932451038,    0.0027050436381634005,
+    -0.0022146568586112986,  -0.0023927521827856475,  0.0022477597114187653,
+    0.0020937340035129225,   -0.002266301757028872,   -0.0018209974880386698,
+    0.0022569517475881764,   0.0015560490952100908,   -0.0022412051839012007,
+    -0.001314750098015205,   0.0022115890943483034,   0.0010935813680486932,
+    -0.0021674203444939926,  -0.0008822257189953905,  0.0021265551428543772,
+    0.0006994817682676137,   -0.0020684792621014857,  -0.0005169276482732894,
+    0.0020296451360248486,   0.0003762055310051086,   -0.0019542465345495637,
+    -0.00018853242904265353, 0.001974941764859404,    0.00013467879098560712,
+    -0.0018438080070986866,  0.00013860481511378278,  0.0020537985664696805,
+    0.000022984138603901914, -0.0017453123023537607,  0.0005429619868192588,
+    0.0025035930967126315,   0.0002721535795504213,   -0.0015563530079133385,
+    0.0012718880881058892,   0.0040583237055417075,   0.001780417290846837,
+    -0.0009241688686624757,  0.0025929990340545586,   0.00891685978767867,
+    0.009204232105743072,    0.00251719066089494,     -0.003594191447486389,
+    -0.0041665939310652385,  -0.0016550762341430308};
 
-template <typename NumType>
-inline NumType zeroethOrderBessel(NumType x) {
-  const NumType eps = 0.00001;
+constexpr double square(double a) {
+  return a * a;
+}
 
-  NumType besselValue = 0;
-  NumType term = 1;
-  NumType m = 0;
+constexpr double filter_gain() {
 
-  while (term > eps * besselValue) {
-    besselValue += term;
-    ++m;
-    term *= (x * x) / (4 * m * m);
+  double temp[FILTER_TAP_NUM] = {};
+
+  for (int i = 0; i < FILTER_TAP_NUM; ++i) {
+    temp[i] = square(filter_taps[i]);
   }
 
-  return besselValue;
-}
-
-double process_single_sample(CircularBuffer<double> cBuf, double *kernel,
-                             unsigned int kernel_size) {
-  double result1 = 0.0;
-  double result2 = 0.0;
-
-  // std::cout << "Convolving single sample!" << std::endl;
-  return result1 + result2;
-}
-
-void linear_convolve(const float *input, double *kernel,
-                     CircularBuffer<double> circ_buf, double *output,
-                     const unsigned int &input_size,
-                     const unsigned int &kernel_size) {
-  assert(input != nullptr);
-  assert(kernel != nullptr);
-  assert(output != nullptr);
-
-  // std::cout << "Preparing to convolve signal" << std::endl;
-  // std::cout << "circ_buf:" << std::endl;
-  // for (auto i = 0u; i < kernel_size; ++i) {
-  // std::cout << circ_buf[i] << std::endl;
-  // }
-  double y = 0.0f;
-  double y2 = 0.0f;
-
-  for (auto i = 0u; i < input_size; ++i) {
-    circ_buf.data[circ_buf.pos] = input[i];
-
-#if TARGET_OS_MAC
-
-    vDSP_dotprD(kernel + circ_buf.pos, 1, circ_buf.data, 1, &y,
-                kernel_size - circ_buf.pos);
-    vDSP_dotprD(kernel, 1, &circ_buf.data[kernel_size - circ_buf.pos], 1, &y2,
-                circ_buf.pos);
-
-#else
-
-// TODO: THIS IS NOT CORRECT -- needs to be fixed such that it is like above
-    std::vector<float> circ_part_1;
-
-    for (int i = static_cast<signed int>(cBuf.pos); i >= 0; --i) {
-      circ_part_1.push_back(cBuf.data[i]);
-    }
-
-    for (auto i = kernel_size - 1; i > cBuf.pos; --i) {
-      circ_part_1.push_back(cBuf.data[i]);
-    }
-
-    result1 = std::transform_reduce(PAR circ_part_1.begin(), circ_part_1.end(),
-                                    kernel, 0.0f);
-
-#endif
-
-    circ_buf.pos = circ_buf.pos == 0 ? kernel_size - 1 : circ_buf.pos - 1;
-
-    output[i] = y + y2;
+  double sum = 0.0;
+  for (int i = 0; i < FILTER_TAP_NUM; ++i) {
+    sum += temp[i];
   }
 
+  return 1 / sum;
 }
 
-// win is output buffer to write to, must be of size: sizeof(NumType) * M
-// M is window size
-// shape is alpha beta parameter determined from computeShape()
-template <typename NumType>
-void buildWindow(NumType *win, unsigned int M, NumType shape) {
-  const NumType oneOverDenom = 1.0 / zeroethOrderBessel<NumType>(shape);
-  const unsigned int N = M - 1;
-  const NumType oneOverN = 1.0 / N;
-
-  for (unsigned int n = 0; n <= N; ++n) {
-    const NumType K = (2.0 * n * oneOverN) - 1.0;
-    const double arg = std::sqrt(1.0 - (K * K));
-
-    win[n] = zeroethOrderBessel<NumType>(shape * arg) * oneOverDenom;
-  }
-}
-
-template <typename NumType>
-void applyWindow(NumType *output, NumType *window, unsigned int length) {
-  for (unsigned int n = 0; n < length; n++) {
-    output[n] = output[n] * window[n];
-  }
-}
-
-
-template <typename NumType>
-void buildSinc(NumType *output, int length, NumType cutoff,
-               NumType fs) {
-  NumType n = 0.0 - static_cast<NumType>(length / 2);
-
-  for (auto i = 0; i < length; ++i) {
-    NumType pi_n = Constants::PI * n;
-    // std::cout << "pin: " << pi_n << std::endl;
-    output[i] = (i == length / 2) ? 1.0 : std::sin( pi_n * cutoff * (fs / 2) ) / pi_n;
-    n += 1.0;
-  }
-}
-
-/**
- * designFIRKaiserKernel takes desired characteristics of
- * FIR window and returns the calculated kernel coefficients
- * in the output buffer
- * \param: output -- size M -- populated with filter coefficients
- * \param: window -- size M -- used for storing window values
- * \param: fs -- current sample rate
- * \param M -- size of kernel
- * \param shape -- beta value of kaiser window
- **/
-// results in normalized filter kernel stored in output
-template <typename NumType>
-void designFIRKaiserKernel(NumType *output, NumType *window, NumType fs,
-                           unsigned int M, NumType shape) {
-  auto normalized_cutoff = fs / 4;
-  // TODO: fix normalized cutoff value
-  buildSinc<NumType>(output, M, 0.01, fs);
-  // std::cout << "After build sinc" << std::endl;
-  // for (auto n = 0u; n < M; ++n) {
-    // std::cout << output[n] << std::endl;
-  // }
-  buildWindow<NumType>(window, M, shape);
-  // std::cout << "After build window" << std::endl;
-  // for (auto n = 0u; n < M; ++n) {
-    // std::cout << window[n] << std::endl;
-  // }
-  applyWindow<NumType>(output, window, M);
-
-  NumType sum = 0.0;
-
-  // normalize for 1 at DC
-  for (auto n = 0u; n < M; ++n) {
-    // std::cout << "output before norm: " << output[n] << std::endl;
-    sum += output[n];
-  }
-  for (auto n = 0u; n < M; ++n) {
-    output[n] /= sum;
-  }
-}
-
-// compute beta given desired passband attenuation
-template <typename NumType>
-NumType computeKaiserBeta(NumType passband_attenuation) {
-  NumType alpha;
-
-  if (passband_attenuation > 60.0) {
-    alpha = 0.12438 * (passband_attenuation + 6.3);
-  } else if (passband_attenuation > 13.26) {
-    alpha = 0.76609 * (std::pow((passband_attenuation - 13.26), 0.4)) +
-            0.09834 * (passband_attenuation - 13.26);
-  } else {
-    alpha = 0.0;
-  }
-
-  return alpha;
-}
-
-// Compute M (length of window)
-// given normalized width (between 0 and 0.5)
-// and alpha (desired passband attenuation)
-template <typename NumType>
-unsigned int computeKaiserLength(NumType width, NumType alpha) {
-  return static_cast<unsigned int>(
-      (1.0 + (2 * std::sqrt((Constants::PI_SQRD + (alpha * alpha)) /
-                            (Constants::PI * width)))));
-}
-
-}  // namespace JSCDSP::FIRFilter
+} // namespace FIRFilter

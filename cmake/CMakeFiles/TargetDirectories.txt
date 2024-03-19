@@ -1,8 +1,0 @@
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/HardClipADAA_scsynth.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/HardClipADAA_supernova.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/edit_cache.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/rebuild_cache.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/list_install_components.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/install.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/install/local.dir
-/Users/jamessquires/Music Dev/test_sc_plugin_cookie/hardclipadaa/cmake/CMakeFiles/install/strip.dir

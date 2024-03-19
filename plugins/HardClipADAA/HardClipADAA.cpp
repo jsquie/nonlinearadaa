@@ -6,9 +6,8 @@
 #include "HardClipADAA.hpp"
 
 #include <cmath>
-#include <iostream>
-#include <memory>
 
+#include "FIRFilter.hpp"
 #include "Li2.hpp"
 #include "SC_InterfaceTable.h"
 #include "SC_PlugIn.hpp"
@@ -99,7 +98,11 @@ enum AntiDerivativeLevel { First = 1, Second = 2 };
 namespace JSCDSP::HardClipADAA {
 
 HardClipADAA::HardClipADAA() {
-  M = 63;
+
+  // M = FIRFilter::FILTER_TAP_NUM;
+  M = 209;
+
+
   osBuffer = reinterpret_cast<double *>(
       RTAlloc(mWorld, inBufferSize(0) * in0(OverSample) * sizeof(double)));
 
@@ -107,104 +110,16 @@ HardClipADAA::HardClipADAA() {
   int first_buffer_size = std::ceil(Mf / in0(OverSample));
   int last_buffer_size = std::floor(Mf / in0(OverSample));
 
-/*
-
-FIR filter designed with
-http://t-filter.appspot.com
-
-sampling frequency: 44100 Hz
-
-* 0 Hz - 1000 Hz
-  gain = 1
-  desired ripple = 5 dB
-  actual ripple = 4.050040059095146 dB
-
-* 1500 Hz - 22050 Hz
-  gain = 0
-  desired attenuation = -25 dB
-  actual attenuation = -25.256251343510396 dB
-
-*/
-
-#define FILTER_TAP_NUM 63
-
-static double filter_taps[FILTER_TAP_NUM] = {
-  -0.030660379541817155,
-  -0.006930252652193655,
-  -0.007426606875288303,
-  -0.0077304521574798925,
-  -0.007805654047780043,
-  -0.007627358073715853,
-  -0.007123361170733022,
-  -0.006377495207966196,
-  -0.005212485606290447,
-  -0.0037179612791280836,
-  -0.0018893069905069938,
-  0.0003031347728881851,
-  0.0028518138446229848,
-  0.005755694749310335,
-  0.008945405753532943,
-  0.012416984304270736,
-  0.016119314979375885,
-  0.019997655165236015,
-  0.02401203285079631,
-  0.02809885339907276,
-  0.03220543281661772,
-  0.03624236586185808,
-  0.040151565039062635,
-  0.043869271258687656,
-  0.047323200707502136,
-  0.050460686719297834,
-  0.05321950592837737,
-  0.05555898793967278,
-  0.05742296873168411,
-  0.05877846833665994,
-  0.059606627462459476,
-  0.059882326502100264,
-  0.059606627462459476,
-  0.05877846833665994,
-  0.05742296873168411,
-  0.05555898793967278,
-  0.05321950592837737,
-  0.050460686719297834,
-  0.047323200707502136,
-  0.043869271258687656,
-  0.040151565039062635,
-  0.03624236586185808,
-  0.03220543281661772,
-  0.02809885339907276,
-  0.02401203285079631,
-  0.019997655165236015,
-  0.016119314979375885,
-  0.012416984304270736,
-  0.008945405753532943,
-  0.005755694749310335,
-  0.0028518138446229848,
-  0.0003031347728881851,
-  -0.0018893069905069938,
-  -0.0037179612791280836,
-  -0.005212485606290447,
-  -0.006377495207966196,
-  -0.007123361170733022,
-  -0.007627358073715853,
-  -0.007805654047780043,
-  -0.0077304521574798925,
-  -0.007426606875288303,
-  -0.006930252652193655,
-  -0.030660379541817155
-};
-
-  // os.init(in0(OverSample), inBufferSize(0), M);
   for (int i = 0; i < in0(OverSample); ++i) {
     if (i == in0(OverSample) - 1) {
       kernels.emplace_back(new double[last_buffer_size]);
       for (int j = 0; j < last_buffer_size; ++j) {
-        kernels.at(i).get()[j] = filter_taps[(j << 1) + i];
+        kernels.at(i).get()[j] = FIRFilter::filter_taps[(j << 1) + i];
       }
     } else {
       kernels.emplace_back(new double[first_buffer_size]);
       for (int j = 0; j < first_buffer_size; ++j) {
-        kernels.at(i).get()[j] = filter_taps[(j << 1) + i];
+        kernels.at(i).get()[j] = FIRFilter::filter_taps[(j << 1) + i];
       }
     }
   }
@@ -247,33 +162,25 @@ void HardClipADAA::next_aa(int nSamples) {
   float *outbuf = out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
-  std::vector<double> osB;
-
   // up sample -- results are stored in osBuffer
-  os.processSamplesUp(sig, kernels, osB);
+  os.processSamplesUp(sig, kernels, osBuffer);
 
   // assert(osB.size() == 128);
   // process
-  for (auto it = osB.begin(); it != osB.end(); ++it) {
+  for (auto i = 0; i < twoNSamples; ++i) {
     if (adlevel == JSCDSP::ADAA::AntiDerivativeLevel::First) {
-      *it = JSCDSP::ADAA::next_first_adaa(*it, x1, ad1_x1,
+      osBuffer[i] = JSCDSP::ADAA::next_first_adaa(osBuffer[i], x1, ad1_x1,
                                                   HardClipADAA::clip,
                                                   HardClipADAA::hc_first_ad);
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
-      *it = JSCDSP::ADAA::next_second_adaa(
-          *it , x1, x2, ad2_x0, ad2_x1, d2, HardClipADAA::clip,
+      osBuffer[i] = JSCDSP::ADAA::next_second_adaa(
+          osBuffer[i], x1, x2, ad2_x0, ad2_x1, d2, HardClipADAA::clip,
           HardClipADAA::hc_first_ad, HardClipADAA::hc_second_ad);
     }
   }
 
-  int i = 0;
-  for (auto it = osB.cbegin(); it != osB.cend(); it += 2) {
-    outbuf[i] = static_cast<float>(*it); 
-    ++i;
-  }
-
-  // os.processSamplesDown(outbuf, kernels, osBuffer);
+  os.processSamplesDown(outbuf, kernels, osBuffer);
 }
 
 }  // namespace JSCDSP::HardClipADAA

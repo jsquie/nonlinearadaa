@@ -1,5 +1,0 @@
-HelloTest.BasicAssertions 1 0.00530108
-FilterDesignTests.BasicAssertions 1 0.00288113
-ConvolveTests.BasicConvolve 0 0
----
-ConvolveTests.BasicConvolve

@@ -68,6 +68,7 @@ class HardClipADAA : public SCUnit {
   enum Outputs { Out1, NumOutputParams };
 };
 
+
 }  // namespace JSCDSP::HardClipADAA
 
 namespace JSCDSP::TanhADAA {
