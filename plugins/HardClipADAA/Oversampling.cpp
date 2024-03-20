@@ -7,7 +7,7 @@
 #include <TargetConditionals.h>
 #endif
 
-// #include "FIRFilter.hpp"
+#include "FIRFilter.hpp"
 #include "Oversampling.hpp"
 #include "OversamplingStage.hpp"
 
@@ -68,13 +68,13 @@ void Oversampling::processSamplesUp(
   assert(input != nullptr);
   assert(!kernels.empty());
   // assert(factor == 2);
+  
 
   for (int n = 0; n < nSamples; ++n) {
     for (int j = 0; j < factor; ++j) {
-      osBuffer[(n << factor) + j] =
-          convolve(static_cast<double>(zapgremlins(input[n])),
-                   up_sample_stages.at(j), kernels.at(j)); 
-          // FIRFilter::filter_gain();
+      osBuffer[(n << 1) + j] =
+          convolve(static_cast<double>(input[n]),
+                   up_sample_stages.at(j), kernels.at(j)) * filter_gain();
     }
   }
 };
@@ -92,7 +92,7 @@ void Oversampling::processSamplesDown(
       output[n] += convolve(osBuffer[(n << 1) + j], down_sample_stages.at(j),
                             kernels.at(j));
     }
-    // output[n] *= FIRFilter::filter_gain();
+    output[n] *= filter_gain();
   }
 }
 }  // namespace Oversampling

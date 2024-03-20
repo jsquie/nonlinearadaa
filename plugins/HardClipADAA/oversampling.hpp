@@ -21,8 +21,8 @@ class Oversampling {
                         const std::vector<std::shared_ptr<double[]>>& kernels,
                         double* const& osBuffer);
   void processSamplesDown(float* const& output,
-  const std::vector<std::shared_ptr<double[]>>& kernels,
-  double* const& osBuffer);
+                          const std::vector<std::shared_ptr<double[]>>& kernels,
+                          double* const& osBuffer);
 
  private:
   std::vector<std::shared_ptr<OversamplingStage>> up_sample_stages;

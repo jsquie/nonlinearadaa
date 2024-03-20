@@ -10,7 +10,16 @@ cmake_minimum_required(VERSION 3.12)
 set(project_name "HardClipADAA")
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH})
 set(CMAKE_CXX_STANDARD 20)
+# Compiler flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3") 
 
+# macOS specific framework Accelerate
+find_library(ACCELERATE_FRAMEWORK Accelerate)
+
+# Check if the Accelerate framework was found
+if(NOT ACCELERATE_FRAMEWORK)
+    message(FATAL_ERROR "Accelerate framework not found")
+endif()
 ####################################################################################################
 # load modules
 include(SuperColliderServerPlugin RESULT_VARIABLE server_plugin_found)
@@ -49,8 +58,8 @@ message(STATUS "Install directory set to: ${CMAKE_INSTALL_PREFIX}")
 # options
 option(SUPERNOVA "Build plugins for supernova" ON)
 option(SCSYNTH "Build plugins for scsynth" ON)
-option(NATIVE "Optimize for native architecture" OFF)
-option(STRICT "Use strict warning flags" OFF)
+option(NATIVE "Optimize for native architecture" ON)
+option(STRICT "Use strict warning flags" ON)
 option(NOVA_SIMD "Build plugins with nova-simd support." ON)
 
 ####################################################################################################
