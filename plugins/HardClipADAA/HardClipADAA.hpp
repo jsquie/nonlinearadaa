@@ -51,10 +51,10 @@ class HardClipADAA : public SCUnit {
   static inline double hc_second_ad(const double& v);
 
   double* osBuffer;
+  Oversampling::Oversampling os;
   std::vector<std::vector<double>> oversample_stages;
   std::vector<std::shared_ptr<double[]>> up_kernels;
   std::vector<std::shared_ptr<double[]>> down_kernels;
-  Oversampling::Oversampling os;
 
   double x1{0.0f};
   double ad1_x1{0.0f};
@@ -82,14 +82,15 @@ class TanhADAA : public SCUnit {
  private:
   // Calc function
   void next_aa(int nSamples);
+  static inline double tanh(const double& v);
   static inline double tanh_first_ad(const double& v);
   static inline double tanh_second_ad(const double& v);
 
   double* osBuffer;
+  Oversampling::Oversampling os;
   std::vector<std::vector<double>> oversample_stages;
   std::vector<std::shared_ptr<double[]>> up_kernels;
   std::vector<std::shared_ptr<double[]>> down_kernels;
-  Oversampling::Oversampling os;
 
   double x1{0.0f};
   double ad1_x1{0.0f};

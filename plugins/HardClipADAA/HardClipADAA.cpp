@@ -194,6 +194,7 @@ void HardClipADAA::next_aa(int nSamples) {
 namespace JSCDSP::TanhADAA {
 
 TanhADAA::TanhADAA() {
+  // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
   const int up_first_buffer_size = std::ceil(fM_up / osFactor);
   const int down_first_buffer_size = std::ceil(fM_down / osFactor);
@@ -239,6 +240,10 @@ TanhADAA::TanhADAA() {
 
 TanhADAA::~TanhADAA() { RTFree(mWorld, osBuffer); }
 
+inline double TanhADAA::tanh(const double& v) {
+  return std::tanh(v);
+}
+
 inline double TanhADAA::tanh_first_ad(const double &v) {
   return std::log(std::cosh(v));
 }
@@ -252,28 +257,33 @@ inline double TanhADAA::tanh_second_ad(const double &v) {
 }
 
 void TanhADAA::next_aa(int nSamples) {
-  const float *sig = in(Input);
   const int twoNSamples = nSamples * 2;
 
-  float *outbuf = (float *)out(Out1);
+  // println("Starting a next_aa call");
+  const float *sig = in(Input);
+  float *outbuf = out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
+  // up sample -- results are stored in osBuffer
   os.processSamplesUp(sig, up_kernels, osBuffer);
+
   // process
   for (auto i = 0; i < nSamples * 2; ++i) {
     if (adlevel == JSCDSP::ADAA::AntiDerivativeLevel::First) {
       osBuffer[i] = JSCDSP::ADAA::next_first_adaa(
-          osBuffer[i], x1, ad1_x1, [](const double &v) { return std::tanh(v); },
+          osBuffer[i], x1, ad1_x1, TanhADAA::tanh, 
           TanhADAA::tanh_first_ad);
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
       osBuffer[i] = JSCDSP::ADAA::next_second_adaa(
           osBuffer[i], x1, x2, ad2_x0, ad2_x1, d2,
-          [](const double &v) { return std::tanh(v); }, TanhADAA::tanh_first_ad,
+          TanhADAA::tanh, TanhADAA::tanh_first_ad,
           TanhADAA::tanh_second_ad);
+
     }
   }
 
+  // down sample -- results stored in outbuf
   os.processSamplesDown(outbuf, down_kernels, osBuffer);
 }
 
