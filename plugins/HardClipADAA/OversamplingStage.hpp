@@ -5,9 +5,9 @@
 struct OversamplingStage {
   double y0{0.0f};
   double y1{0.0f};
-  std::shared_ptr<double[]> data;
+  std::shared_ptr<double[]> data = {};
   int pos{0};
-  const int size;
+  const int size{0};
 
   explicit OversamplingStage(const int &newSize)
       : size(newSize), y0(0.0), y1(0.0), pos(0.0) {

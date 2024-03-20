@@ -11,7 +11,7 @@ namespace Oversampling {
 
 class Oversampling {
  public:
-  void init(const int& initOSFactor, const int& initNSamples, const int& M);
+  void init(const int& initOSFactor, const int& initNSamples);
 
   double convolve(const double& input,
                   std::shared_ptr<OversamplingStage>& stage,

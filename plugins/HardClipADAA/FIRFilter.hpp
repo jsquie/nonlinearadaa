@@ -1,12 +1,52 @@
 // Copyright 2024 James Squires
 #pragma once
 
-#define FILTER_TAP_NUM 209
+/*
 
-constexpr int filter_tap_num = FILTER_TAP_NUM;
-constexpr double square(double a) { return a * a; }
+FIR filter designed with
+http://t-filter.appspot.com
 
-constexpr double filter_taps[FILTER_TAP_NUM] = {
+sampling frequency: 88200 Hz
+
+* 0 Hz - 22250 Hz
+  gain = 1
+  desired ripple = 1 dB
+  actual ripple = 0.6841297988737765 dB
+
+* 32000 Hz - 44100 Hz
+  gain = 0
+  desired attenuation = -120 dB
+  actual attenuation = -120.82101778440254 dB
+
+*/
+
+#define UP_FILTER_TAP_NUM 33
+#define UP_FILTER_TAP_NUM_F 33.0f
+
+constexpr int M_up = UP_FILTER_TAP_NUM;
+constexpr float fM_up = UP_FILTER_TAP_NUM_F;
+
+constexpr double up_filter_taps[UP_FILTER_TAP_NUM] = {
+    -0.0012246091154708878, -0.006616426278879418,  -0.01273110279401792,
+    -0.00605363630895313,   0.010022443831607273,   0.005056295420376784,
+    -0.015811649653449722,  -0.0018617274019090756, 0.0255058609629138,
+    -0.0077493311209674304, -0.03771969766161676,   0.030327526731206006,
+    0.05006541556063978,    -0.08292061503807464,   -0.05936057831504514,
+    0.3099774184144736,     0.5628274952286104,     0.3099774184144736,
+    -0.05936057831504514,   -0.08292061503807464,   0.05006541556063978,
+    0.030327526731206006,   -0.03771969766161676,   -0.0077493311209674304,
+    0.0255058609629138,     -0.0018617274019090756, -0.015811649653449722,
+    0.005056295420376784,   0.010022443831607273,   -0.00605363630895313,
+    -0.01273110279401792,   -0.006616426278879418,  -0.0012246091154708878};
+
+#define DOWN_FILTER_TAP_NUM 209
+#define DOWN_FILTER_TAP_NUM_F 209.0f
+
+constexpr int M_down = DOWN_FILTER_TAP_NUM;
+constexpr float fM_down = DOWN_FILTER_TAP_NUM_F;
+
+
+constexpr double down_filter_taps[DOWN_FILTER_TAP_NUM] = {
     -0.0016550762341430308,  -0.0041665939310652385,  -0.003594191447486389,
     0.00251719066089494,     0.009204232105743072,    0.00891685978767867,
     0.0025929990340545586,   -0.0009241688686624757,  0.001780417290846837,
@@ -78,15 +118,32 @@ constexpr double filter_taps[FILTER_TAP_NUM] = {
     0.009204232105743072,    0.00251719066089494,     -0.003594191447486389,
     -0.0041665939310652385,  -0.0016550762341430308};
 
-constexpr double filter_gain() {
-  double temp[FILTER_TAP_NUM] = {};
+constexpr double square(double a) { return a * a; }
 
-  for (int i = 0; i < FILTER_TAP_NUM; ++i) {
-    temp[i] = square(filter_taps[i]);
+constexpr double up_filter_gain() {
+  double temp[UP_FILTER_TAP_NUM] = {};
+
+  for (int i = 0; i < UP_FILTER_TAP_NUM; ++i) {
+    temp[i] = square(up_filter_taps[i]);
   }
 
   double sum = 0.0;
-  for (int i = 0; i < FILTER_TAP_NUM; ++i) {
+  for (int i = 0; i < UP_FILTER_TAP_NUM; ++i) {
+    sum += temp[i];
+  }
+
+  return 1 / sum;
+}
+
+constexpr double down_filter_gain() {
+  double temp[DOWN_FILTER_TAP_NUM] = {};
+
+  for (int i = 0; i < DOWN_FILTER_TAP_NUM; ++i) {
+    temp[i] = square(down_filter_taps[i]);
+  }
+
+  double sum = 0.0;
+  for (int i = 0; i < DOWN_FILTER_TAP_NUM; ++i) {
     sum += temp[i];
   }
 

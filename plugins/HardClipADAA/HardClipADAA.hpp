@@ -44,25 +44,24 @@ class HardClipADAA : public SCUnit {
 
  private:
   // Calc function
-  static inline double signum(const double& v) { return v < 0 ? -1.0 : 1.0; };
   void next_aa(int nSamples);
+  static inline double signum(const double& v) { return v < 0 ? -1.0 : 1.0; };
   static inline double clip(const double& v);
   static inline double hc_first_ad(const double& v);
   static inline double hc_second_ad(const double& v);
-  inline double filter_next(double v, double* xv, double* yv);
 
   double* osBuffer;
   std::vector<std::vector<double>> oversample_stages;
-  std::vector<std::shared_ptr<double[]>> kernels;
+  std::vector<std::shared_ptr<double[]>> up_kernels;
+  std::vector<std::shared_ptr<double[]>> down_kernels;
   Oversampling::Oversampling os;
-  unsigned int M;
 
-  double x1;
-  double ad1_x1;
-  double x2;
-  double d2;
-  double ad2_x1;
-  double ad2_x0;
+  double x1{0.0f};
+  double ad1_x1{0.0f};
+  double x2{0.0f};
+  double d2{0.0f};
+  double ad2_x1{0.0f};
+  double ad2_x0{0.0f};
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };
@@ -79,19 +78,25 @@ class TanhADAA : public SCUnit {
   // Destructor
   ~TanhADAA();
 
+
  private:
   // Calc function
   void next_aa(int nSamples);
   static inline double tanh_first_ad(const double& v);
   static inline double tanh_second_ad(const double& v);
-  inline double filter_next(double v, double* xv, double* yv);
 
-  double x1;
-  double ad1_x1;
-  double x2;
-  double d2;
-  double ad2_x1;
-  double ad2_x0;
+  double* osBuffer;
+  std::vector<std::vector<double>> oversample_stages;
+  std::vector<std::shared_ptr<double[]>> up_kernels;
+  std::vector<std::shared_ptr<double[]>> down_kernels;
+  Oversampling::Oversampling os;
+
+  double x1{0.0f};
+  double ad1_x1{0.0f};
+  double x2{0.0f};
+  double d2{0.0f};
+  double ad2_x1{0.0f};
+  double ad2_x0{0.0f};
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };
