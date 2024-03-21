@@ -1,7 +1,6 @@
 // Copyright 2024 James Squires
 #include <memory>
 
-
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
 #include <TargetConditionals.h>
@@ -19,27 +18,31 @@ void Oversampling::init(const int &initOSFactor, const int &initNSamples) {
   factor = initOSFactor;
   nSamples = initNSamples;
 
-  for (int i = 0; i < factor - 1; ++i) {
-    up_sample_stages.emplace_back(
-        new OversamplingStage(static_cast<int>(std::ceil(fM_up / factor))));
-    down_sample_stages.emplace_back(
-        new OversamplingStage(static_cast<int>(std::ceil(fM_down / factor))));
-  }
-  up_sample_stages.emplace_back(new OversamplingStage(std::floor(fM_up / factor)));
-  down_sample_stages.emplace_back(new OversamplingStage(std::floor(fM_down / factor)));
+  up_sample_stage = std::shared_ptr<OversamplingStage>(
+      new OversamplingStage(UP_FILTER_TAP_NUM));
+  down_sample_stage = std::shared_ptr<OversamplingStage>(
+      new OversamplingStage(UP_FILTER_TAP_NUM));
 
-  for (auto st : up_sample_stages) {
-    st.reset();
-  }
+  up_odd_delay_buffer =
+      std::shared_ptr<CircularBuffer>(new CircularBuffer(up_odd_delay));
+  down_odd_delay_buffer =
+      std::shared_ptr<CircularBuffer>(new CircularBuffer(down_odd_delay));
 
-  for (auto st : down_sample_stages) {
-    st.reset();
-  }
+  up_sample_stage->reset();
+  down_sample_stage->reset();
+}
+
+double Oversampling::delay(const double &input,
+                           std::shared_ptr<CircularBuffer> &delay_buf) {
+  delay_buf->data[delay_buf->pos] = input * oddidx_scale;
+  delay_buf->pos =
+      (delay_buf->pos == 0) ? delay_buf->size - 1 : delay_buf->pos - 1;
+  return delay_buf->data[delay_buf->pos];
 }
 
 double Oversampling::convolve(const double &input,
                               std::shared_ptr<OversamplingStage> &stage,
-                              const std::shared_ptr<double[]> &kernel) {
+                              const double kernel[]) {
   stage->y0 = 0.0f;
   stage->y1 = 0.0f;
 
@@ -50,10 +53,8 @@ double Oversampling::convolve(const double &input,
 
 #if TARGET_OS_MAC
 
-  vDSP_dotprD(stage->data.get() + zPtr, 1, kernel.get(), 1, &stage->y0,
-              M - zPtr);
-  vDSP_dotprD(stage->data.get(), 1, kernel.get() + (M - zPtr), 1, &stage->y1,
-              zPtr);
+  vDSP_dotprD(stage->data.get() + zPtr, 1, kernel, 1, &stage->y0, M - zPtr);
+  vDSP_dotprD(stage->data.get(), 1, kernel + (M - zPtr), 1, &stage->y1, zPtr);
 
 #endif
 
@@ -61,37 +62,35 @@ double Oversampling::convolve(const double &input,
   return stage->y0 + stage->y1;
 }
 
-void Oversampling::processSamplesUp(
-    const float *input, const std::vector<std::shared_ptr<double[]>> &kernels,
-    double *const &osBuffer) {
+void Oversampling::processSamplesUp(const float *input,
+                                    double *const &osBuffer) {
   assert(input != nullptr);
-  assert(!kernels.empty());
   // assert(factor == 2);
 
   for (int n = 0; n < nSamples; ++n) {
+    // even indices of input are convolved with up_ftaps and stored in even
+    // indices of osBuffer odd indices of input are delayed by
+    // up_odd_idx_delay
     for (int j = 0; j < factor; ++j) {
-      osBuffer[(n << 1) + j] =
-          convolve(static_cast<double>(input[n]),
-                               up_sample_stages.at(j), kernels.at(j)) *
-                      up_filter_gain() * NEG_ONE_DB;
+      double y = (j == 0) ? convolve(input[n], up_sample_stage, up_ftaps)
+                          : delay(input[n], up_odd_delay_buffer);
+      osBuffer[(n << 1) + j] = y * 2;
     }
   }
 };
 
-void Oversampling::processSamplesDown(
-    float *const &output, const std::vector<std::shared_ptr<double[]>> &kernels,
-    double *const &osBuffer) {
+void Oversampling::processSamplesDown(float *const &output,
+                                      double *const &osBuffer) {
   assert(output != nullptr);
   assert(osBuffer != nullptr);
-  assert(!kernels.empty());
 
   for (int n = 0; n < nSamples; ++n) {
     double y = 0.0;
     for (int j = 0; j < factor; ++j) {
-      y += convolve(
-          osBuffer[(n << 1) + j], down_sample_stages.at(j), kernels.at(j));
+      double inp = osBuffer[(n << 1) + j];
+      y += (j == 0) ? convolve(inp, down_sample_stage, up_ftaps)
+                    : delay(inp, down_odd_delay_buffer);
     }
-    // y *= down_filter_gain();
     output[n] = y * NEG_ONE_DB;
   }
 }

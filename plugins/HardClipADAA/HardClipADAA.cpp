@@ -100,34 +100,8 @@ namespace JSCDSP::HardClipADAA {
 HardClipADAA::HardClipADAA() {
   // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
-  const int up_first_buffer_size = std::ceil(fM_up / osFactor);
-  const int down_first_buffer_size = std::ceil(fM_down / osFactor);
-  const int up_last_buffer_size = std::floor(fM_up / osFactor);
-  const int down_last_buffer_size = std::floor(fM_down / osFactor);
-
   osBuffer = static_cast<double *>(
       RTAlloc(mWorld, inBufferSize(0) * osFactor * sizeof(double)));
-
-  for (int i = 0; i < osFactor - 1; ++i) {
-    up_kernels.emplace_back(new double[up_first_buffer_size]);
-    down_kernels.emplace_back(new double[down_first_buffer_size]);
-    for (int j = 0; j < up_first_buffer_size; ++j) {
-      up_kernels.at(i)[j] = up_filter_taps[(j << 1) + i];
-    }
-    for (int j = 0; j < down_first_buffer_size; ++j) {
-      down_kernels.at(i)[j] = down_filter_taps[(j << 1) + i];
-    }
-  }
-
-  up_kernels.emplace_back(new double[up_last_buffer_size]);
-  down_kernels.emplace_back(new double[down_last_buffer_size]);
-  for (int j = 0; j < up_last_buffer_size; ++j) {
-    up_kernels.at(osFactor - 1)[j] = up_filter_taps[(j << 1) + osFactor - 1];
-  }
-  for (int j = 0; j < down_last_buffer_size; ++j) {
-    down_kernels.at(osFactor - 1)[j] =
-        down_filter_taps[(j << 1) + osFactor - 1];
-  }
 
   os.init(osFactor, inBufferSize(0));
 
@@ -169,7 +143,7 @@ void HardClipADAA::next_aa(int nSamples) {
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
   // up sample -- results are stored in osBuffer
-  os.processSamplesUp(sig, up_kernels, osBuffer);
+  os.processSamplesUp(sig, osBuffer);
 
   // assert(osB.size() == 128);
   // process
@@ -186,7 +160,7 @@ void HardClipADAA::next_aa(int nSamples) {
     }
   }
 
-  os.processSamplesDown(outbuf, down_kernels, osBuffer);
+  os.processSamplesDown(outbuf, osBuffer);
 }
 
 }  // namespace JSCDSP::HardClipADAA
@@ -196,34 +170,8 @@ namespace JSCDSP::TanhADAA {
 TanhADAA::TanhADAA() {
   // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
-  const int up_first_buffer_size = std::ceil(fM_up / osFactor);
-  const int down_first_buffer_size = std::ceil(fM_down / osFactor);
-  const int up_last_buffer_size = std::floor(fM_up / osFactor);
-  const int down_last_buffer_size = std::floor(fM_down / osFactor);
-
   osBuffer = static_cast<double *>(
       RTAlloc(mWorld, inBufferSize(0) * osFactor * sizeof(double)));
-
-  for (int i = 0; i < osFactor - 1; ++i) {
-    up_kernels.emplace_back(new double[up_first_buffer_size]);
-    down_kernels.emplace_back(new double[down_first_buffer_size]);
-    for (int j = 0; j < up_first_buffer_size; ++j) {
-      up_kernels.at(i)[j] = up_filter_taps[(j << 1) + i];
-    }
-    for (int j = 0; j < down_first_buffer_size; ++j) {
-      down_kernels.at(i)[j] = down_filter_taps[(j << 1) + i];
-    }
-  }
-
-  up_kernels.emplace_back(new double[up_last_buffer_size]);
-  down_kernels.emplace_back(new double[down_last_buffer_size]);
-  for (int j = 0; j < up_last_buffer_size; ++j) {
-    up_kernels.at(osFactor - 1)[j] = up_filter_taps[(j << 1) + osFactor - 1];
-  }
-  for (int j = 0; j < down_last_buffer_size; ++j) {
-    down_kernels.at(osFactor - 1)[j] =
-        down_filter_taps[(j << 1) + osFactor - 1];
-  }
 
   os.init(osFactor, inBufferSize(0));
 
@@ -265,7 +213,7 @@ void TanhADAA::next_aa(int nSamples) {
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
   // up sample -- results are stored in osBuffer
-  os.processSamplesUp(sig, up_kernels, osBuffer);
+  os.processSamplesUp(sig, osBuffer);
 
   // process
   for (auto i = 0; i < nSamples * 2; ++i) {
@@ -284,7 +232,7 @@ void TanhADAA::next_aa(int nSamples) {
   }
 
   // down sample -- results stored in outbuf
-  os.processSamplesDown(outbuf, down_kernels, osBuffer);
+  os.processSamplesDown(outbuf, osBuffer);
 }
 
 }  // namespace JSCDSP::TanhADAA

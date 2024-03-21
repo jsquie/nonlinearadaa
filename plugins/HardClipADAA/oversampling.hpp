@@ -3,7 +3,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "OversamplingStage.hpp"
 
@@ -13,24 +12,24 @@ class Oversampling {
  public:
   void init(const int& initOSFactor, const int& initNSamples);
 
-  double convolve(const double& input,
-                  std::shared_ptr<OversamplingStage>& stage,
-                  const std::shared_ptr<double[]>& kernel);
+  inline double delay(const double& input,
+                      std::shared_ptr<CircularBuffer>& delay_buf);
 
-  void processSamplesUp(const float* input,
-                        const std::vector<std::shared_ptr<double[]>>& kernels,
-                        double* const& osBuffer);
-  void processSamplesDown(float* const& output,
-                          const std::vector<std::shared_ptr<double[]>>& kernels,
-                          double* const& osBuffer);
+  inline double convolve(const double& input,
+                         std::shared_ptr<OversamplingStage>& stage,
+                         const double kernel[]);
+
+  inline void processSamplesUp(const float* input, double* const& osBuffer);
+  inline void processSamplesDown(float* const& output, double* const& osBuffer);
 
  private:
-  std::vector<std::shared_ptr<OversamplingStage>> up_sample_stages;
-  std::vector<std::shared_ptr<OversamplingStage>> down_sample_stages;
+  std::shared_ptr<OversamplingStage> up_sample_stage;
+  std::shared_ptr<OversamplingStage> down_sample_stage;
+  std::shared_ptr<CircularBuffer> up_odd_delay_buffer;
+  std::shared_ptr<CircularBuffer> down_odd_delay_buffer;
 
   int factor;
   int nSamples;
-  int M;
 };
 
 }  // namespace Oversampling
