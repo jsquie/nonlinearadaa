@@ -6,9 +6,11 @@
 #include "HardClipADAA.hpp"
 
 #include <cmath>
+#include <memory>
 
 #include "FIRFilter.hpp"
 #include "Li2.hpp"
+#include "OversamplingStage.hpp"
 #include "SC_InterfaceTable.h"
 #include "SC_PlugIn.hpp"
 #include "Utils.hpp"
@@ -105,6 +107,7 @@ HardClipADAA::HardClipADAA() {
 
   os.init(osFactor, inBufferSize(0));
 
+  delay = std::shared_ptr<CircularBuffer>(new CircularBuffer(UP_FILTER_TAP_NUM + 1));
   x1 = 0.0;
   x2 = 0.0;
   d2 = 0.0;
@@ -118,19 +121,25 @@ HardClipADAA::HardClipADAA() {
 
 HardClipADAA::~HardClipADAA() { RTFree(mWorld, osBuffer); }
 
-inline double HardClipADAA::clip(const double &v) {
-  return (std::abs(v) <= 1.0f) ? v : 1.0;
+inline double HardClipADAA::signum(const double &d) {
+  return (d < 0.0) ? -1.0 : 1.0;
+}
+
+inline double HardClipADAA::clip(const double &d) {
+  const double t = d < -1.0 ? -1.0 : d;
+  return t > 1.0 ? 1.0 : t;
 }
 
 inline double HardClipADAA::hc_first_ad(const double &v) {
-  return (std::abs(v) <= 1.0f) ? (v * v) * 0.5 : (v * signum(v)) - 0.5;
+  return (std::abs(v) <= 1.0) ? (v * v) * 0.5 : (v * signum(v)) - 0.5;
 }
 
 inline double HardClipADAA::hc_second_ad(const double &v) {
-  if (std::abs(v) <= 1.0f) {
-    return std::pow(v, 3) / 6.0;
+  const double oneSixth = 1.0 / 6.0;
+  if (std::abs(v) <= 1.0) {
+    return (v * v * v) * oneSixth;
   } else {
-    return (((std::pow(v, 2) * 0.5) + (1.0 / 6.0)) * signum(v)) - (v * 0.5);
+    return (((v * v * 0.5) + oneSixth) * signum(v)) - (v * 0.5);
   }
 }
 
@@ -148,15 +157,21 @@ void HardClipADAA::next_aa(int nSamples) {
   // assert(osB.size() == 128);
   // process
   for (auto i = 0; i < nSamples * 2; ++i) {
-    if (adlevel == JSCDSP::ADAA::AntiDerivativeLevel::First) {
-      osBuffer[i] = JSCDSP::ADAA::next_first_adaa(osBuffer[i], x1, ad1_x1,
-                                                  HardClipADAA::clip,
-                                                  HardClipADAA::hc_first_ad);
+    if (adlevel == ADAA::AntiDerivativeLevel::First) {
+      delay->data[delay->pos] = osBuffer[i];
+      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
+      double curr =
+          ADAA::next_first_adaa(delay->data[delay->pos], x1, ad1_x1, HardClipADAA::clip,
+                                HardClipADAA::hc_first_ad);
+      osBuffer[i] = curr;
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
-      osBuffer[i] = JSCDSP::ADAA::next_second_adaa(
-          osBuffer[i], x1, x2, ad2_x0, ad2_x1, d2, HardClipADAA::clip,
+      delay->data[delay->pos] = osBuffer[i];
+      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
+      double curr = ADAA::next_second_adaa(
+          delay->data[delay->pos], x1, x2, ad2_x0, ad2_x1, d2, HardClipADAA::clip,
           HardClipADAA::hc_first_ad, HardClipADAA::hc_second_ad);
+      osBuffer[i] = curr;
     }
   }
 
@@ -175,6 +190,7 @@ TanhADAA::TanhADAA() {
 
   os.init(osFactor, inBufferSize(0));
 
+  delay = std::shared_ptr<CircularBuffer>(new CircularBuffer(UP_FILTER_TAP_NUM + 1));
   x1 = 0.0;
   x2 = 0.0;
   d2 = 0.0;
@@ -188,9 +204,7 @@ TanhADAA::TanhADAA() {
 
 TanhADAA::~TanhADAA() { RTFree(mWorld, osBuffer); }
 
-inline double TanhADAA::tanh(const double& v) {
-  return std::tanh(v);
-}
+inline double TanhADAA::tanh(const double &v) { return std::tanh(v); }
 
 inline double TanhADAA::tanh_first_ad(const double &v) {
   return std::log(std::cosh(v));
@@ -217,17 +231,20 @@ void TanhADAA::next_aa(int nSamples) {
 
   // process
   for (auto i = 0; i < nSamples * 2; ++i) {
-    if (adlevel == JSCDSP::ADAA::AntiDerivativeLevel::First) {
-      osBuffer[i] = JSCDSP::ADAA::next_first_adaa(
-          osBuffer[i], x1, ad1_x1, TanhADAA::tanh, 
-          TanhADAA::tanh_first_ad);
+    if (adlevel == ADAA::AntiDerivativeLevel::First) {
+      delay->data[delay->pos] = osBuffer[i];
+      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
+      double curr = ADAA::next_first_adaa(
+          delay->data[delay->pos], x1, ad1_x1, TanhADAA::tanh, TanhADAA::tanh_first_ad);
+      osBuffer[i] = curr;
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
-      osBuffer[i] = JSCDSP::ADAA::next_second_adaa(
-          osBuffer[i], x1, x2, ad2_x0, ad2_x1, d2,
-          TanhADAA::tanh, TanhADAA::tanh_first_ad,
-          TanhADAA::tanh_second_ad);
-
+      delay->data[delay->pos] = osBuffer[i];
+      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
+      double curr = ADAA::next_second_adaa(
+          delay->data[delay->pos], x1, x2, ad2_x0, ad2_x1, d2, TanhADAA::tanh,
+          TanhADAA::tanh_first_ad, TanhADAA::tanh_second_ad);
+      osBuffer[i] = curr;
     }
   }
 

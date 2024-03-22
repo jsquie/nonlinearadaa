@@ -19,8 +19,8 @@ class Oversampling {
                          std::shared_ptr<OversamplingStage>& stage,
                          const double kernel[]);
 
-  inline void processSamplesUp(const float* input, double* const& osBuffer);
-  inline void processSamplesDown(float* const& output, double* const& osBuffer);
+  void processSamplesUp(const float* input, double* const& osBuffer);
+  void processSamplesDown(float* const& output, double* const& osBuffer);
 
  private:
   std::shared_ptr<OversamplingStage> up_sample_stage;

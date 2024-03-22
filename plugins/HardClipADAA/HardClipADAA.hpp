@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "SC_PlugIn.hpp"
-#include "Oversampling.hpp"
 #include <memory>
 #include <vector>
 
+#include "Oversampling.hpp"
+#include "SC_PlugIn.hpp"
 
 namespace JSCDSP::ADAA {
 
@@ -45,17 +45,15 @@ class HardClipADAA : public SCUnit {
  private:
   // Calc function
   void next_aa(int nSamples);
-  static inline double signum(const double& v) { return v < 0 ? -1.0 : 1.0; };
+  static inline double signum(const double& v);
   static inline double clip(const double& v);
   static inline double hc_first_ad(const double& v);
   static inline double hc_second_ad(const double& v);
 
   double* osBuffer;
   Oversampling::Oversampling os;
-  std::vector<std::vector<double>> oversample_stages;
-  std::vector<std::shared_ptr<double[]>> up_kernels;
-  std::vector<std::shared_ptr<double[]>> down_kernels;
 
+  std::shared_ptr<CircularBuffer> delay; 
   double x1{0.0f};
   double ad1_x1{0.0f};
   double x2{0.0f};
@@ -67,7 +65,6 @@ class HardClipADAA : public SCUnit {
   enum Outputs { Out1, NumOutputParams };
 };
 
-
 }  // namespace JSCDSP::HardClipADAA
 
 namespace JSCDSP::TanhADAA {
@@ -78,7 +75,6 @@ class TanhADAA : public SCUnit {
   // Destructor
   ~TanhADAA();
 
-
  private:
   // Calc function
   void next_aa(int nSamples);
@@ -88,16 +84,15 @@ class TanhADAA : public SCUnit {
 
   double* osBuffer;
   Oversampling::Oversampling os;
-  std::vector<std::vector<double>> oversample_stages;
-  std::vector<std::shared_ptr<double[]>> up_kernels;
-  std::vector<std::shared_ptr<double[]>> down_kernels;
 
-  double x1{0.0f};
-  double ad1_x1{0.0f};
-  double x2{0.0f};
-  double d2{0.0f};
-  double ad2_x1{0.0f};
-  double ad2_x0{0.0f};
+  std::shared_ptr<CircularBuffer> delay; 
+
+  double x1{0.0};
+  double ad1_x1{0.0};
+  double x2{0.0};
+  double d2{0.0};
+  double ad2_x1{0.0};
+  double ad2_x0{0.0};
 
   enum InputParams { Input, AntiDerivativeLevel, OverSample, NumInputParams };
   enum Outputs { Out1, NumOutputParams };
