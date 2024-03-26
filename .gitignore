@@ -2,4 +2,8 @@
 
 build*
 
+.cache
+
+.clang-format
+
 .DS_Store
