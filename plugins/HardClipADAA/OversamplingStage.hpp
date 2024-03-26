@@ -1,6 +1,5 @@
 #pragma once
 #include <algorithm>
-#include <iostream>
 #include <memory>
 
 #include "FIRFilter.hpp"
@@ -8,6 +7,8 @@
 #include <Accelerate/Accelerate.h>
 #include <TargetConditionals.h>
 #endif
+
+constexpr double NEG_ONE_DB = 0.8912509381337456;
 
 struct CircularBuffer {
   std::shared_ptr<double[]> data = {};
@@ -75,8 +76,8 @@ struct OversamplingStage {
 
   void processUp(const double *input, const int &input_size) {
     for (int n = 0; n < input_size; ++n) {
-      data[n << 1] = convolve(input[n]);
-      data[(n << 1) + 1] = delayBuf->delay(input[n]);
+      data[n << 1] = convolve(input[n]) * 2.0;
+      data[(n << 1) + 1] = delayBuf->delay(input[n] * foldScaleCoef * 2.0);
     }
   };
 
@@ -85,7 +86,7 @@ struct OversamplingStage {
       double res = 0.0;
       res += convolve(input[n]);
       res += delayBuf->delay(input[n + 1] * foldScaleCoef);
-      data[n >> 1] = res;
+      data[n >> 1] = res * NEG_ONE_DB;
     }
   }
 };

@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "Oversampling.hpp"
 #include "SC_PlugIn.hpp"
 
@@ -51,8 +48,11 @@ class HardClipADAA : public SCUnit {
   static inline double hc_second_ad(const double& v);
 
   double* osBuffer;
+  double* cpyBuf;
   Oversampling::Oversampling os;
 
+
+  int fScale{2};
   double x1{0.0f};
   double ad1_x1{0.0f};
   double x2{0.0f};
@@ -82,6 +82,9 @@ class TanhADAA : public SCUnit {
   static inline double tanh_second_ad(const double& v);
 
   double* osBuffer;
+  double* cpyBuf;
+
+  int fScale{2};
   Oversampling::Oversampling os;
 
   double x1{0.0};

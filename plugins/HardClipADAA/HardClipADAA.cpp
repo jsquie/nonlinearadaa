@@ -6,7 +6,6 @@
 #include "HardClipADAA.hpp"
 
 #include <cmath>
-#include <memory>
 
 #include "Li2.hpp"
 #include "SC_InterfaceTable.h"
@@ -14,7 +13,9 @@
 #include "Utils.hpp"
 
 static InterfaceTable *ft;
-#define println(x) std::cout << x << std::endl
+#define print(x) std::cout << x << ", "
+#define printEln() std::cout << "\n"
+#define printfl() std::cout << "" std::endl
 static unsigned int numCalls = 0;
 
 namespace JSCDSP::ADAA {
@@ -101,8 +102,12 @@ HardClipADAA::HardClipADAA() {
   // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
   const int osScale = std::pow(2, osFactor);
+  fScale = osScale;
   osBuffer = static_cast<double *>(
       RTAlloc(mWorld, inBufferSize(0) * osScale * sizeof(double)));
+
+  cpyBuf =
+      static_cast<double *>(RTAlloc(mWorld, inBufferSize(0) * sizeof(double)));
 
   os.init(osFactor, inBufferSize(0));
 
@@ -117,7 +122,10 @@ HardClipADAA::HardClipADAA() {
   next_aa(1);
 }
 
-HardClipADAA::~HardClipADAA() { RTFree(mWorld, osBuffer); }
+HardClipADAA::~HardClipADAA() {
+  RTFree(mWorld, osBuffer);
+  RTFree(mWorld, cpyBuf);
+}
 
 inline double HardClipADAA::signum(const double &d) {
   return (d < 0.0) ? -1.0 : 1.0;
@@ -142,20 +150,18 @@ inline double HardClipADAA::hc_second_ad(const double &v) {
 }
 
 void HardClipADAA::next_aa(int nSamples) {
-  const int twoNSamples = nSamples * 2;
-
   // println("Starting a next_aa call");
   const float *sig = in(Input);
   float *outbuf = out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
+  const int osBufferSize = nSamples * fScale;
 
-  double cpyBuf[nSamples]; 
   // up sample -- results are stored in osBuffer
   // up sample -- results are stored in osBuffer
   os.processSamplesUp(sig, cpyBuf, osBuffer);
 
   // process
-  for (auto i = 0; i < nSamples * 2; ++i) {
+  for (auto i = 0; i < osBufferSize; ++i) {
     if (adlevel == ADAA::AntiDerivativeLevel::First) {
       double curr =
           ADAA::next_first_adaa(osBuffer[i], x1, ad1_x1, HardClipADAA::clip,
@@ -181,8 +187,12 @@ TanhADAA::TanhADAA() {
   // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
   const int osScale = std::pow(2, osFactor);
+  fScale = osScale;
   osBuffer = static_cast<double *>(
       RTAlloc(mWorld, inBufferSize(0) * osScale * sizeof(double)));
+
+  cpyBuf =
+      static_cast<double *>(RTAlloc(mWorld, inBufferSize(0) * sizeof(double)));
 
   os.init(osFactor, inBufferSize(0));
 
@@ -197,7 +207,10 @@ TanhADAA::TanhADAA() {
   next_aa(1);
 }
 
-TanhADAA::~TanhADAA() { RTFree(mWorld, osBuffer); }
+TanhADAA::~TanhADAA() {
+  RTFree(mWorld, osBuffer);
+  RTFree(mWorld, cpyBuf);
+}
 
 inline double TanhADAA::tanh(const double &v) { return std::tanh(v); }
 
@@ -214,19 +227,18 @@ inline double TanhADAA::tanh_second_ad(const double &v) {
 }
 
 void TanhADAA::next_aa(int nSamples) {
-  const int twoNSamples = nSamples * 2;
 
+  const int osBufferSize = nSamples * fScale;
   // println("Starting a next_aa call");
   const float *sig = in(Input);
   float *outbuf = out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
-  double cpyBuf[nSamples]; 
   // up sample -- results are stored in osBuffer
   os.processSamplesUp(sig, cpyBuf, osBuffer);
 
   // process
-  for (auto i = 0; i < nSamples * 2; ++i) {
+  for (auto i = 0; i < osBufferSize; ++i) {
     if (adlevel == ADAA::AntiDerivativeLevel::First) {
       double curr = ADAA::next_first_adaa(
           osBuffer[i], x1, ad1_x1, TanhADAA::tanh, TanhADAA::tanh_first_ad);
