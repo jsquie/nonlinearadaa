@@ -32,7 +32,7 @@ function(sc_config_compiler_flags target)
             $<$<BOOL:${has_sse}>:-msse>
             $<$<BOOL:${has_sse2}>:-msse2>
             $<$<BOOL:${has_sse_fp}>:-mfpmath=sse>
-            $<$<BOOL:${NATIVE}>:-march=native -03>
+            $<$<BOOL:${NATIVE}>:-march=native -O3>
             $<$<BOOL:${STRICT}>:-Wall -Wextra -Werror -Wpedantic>
             )
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
