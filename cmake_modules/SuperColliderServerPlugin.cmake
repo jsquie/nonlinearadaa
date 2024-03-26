@@ -44,16 +44,19 @@ function(sc_add_server_plugin_properties target is_supernova)
         ${SC_PATH}/include/common
         ${SC_PATH}/common
     )
-# Find the Accelerate framework
-    find_library(ACCELERATE_FRAMEWORK Accelerate)
 
-# Check if the Accelerate framework was found
-    if(NOT ACCELERATE_FRAMEWORK)
-      message(FATAL_ERROR "Accelerate framework not found")
+    if(APPLE)
+      # Find the Accelerate framework
+      find_library(ACCELERATE_FRAMEWORK Accelerate)
+
+      # Check if the Accelerate framework was found
+      if(NOT ACCELERATE_FRAMEWORK)
+        message(FATAL_ERROR "Accelerate framework not found")
+      endif()
+
+      # Link the Accelerate framework with your executable
+      target_link_libraries(${target} ${ACCELERATE_FRAMEWORK})
     endif()
-
-    # Link the Accelerate framework with your executable
-    target_link_libraries(${target} ${ACCELERATE_FRAMEWORK})
     # from CompilerConfig module
     sc_config_compiler_flags(${target})
 
