@@ -5,7 +5,10 @@
 // Adapted from Chow DSP
 #include "HardClipADAA.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <numeric>
 
 #include "Li2.hpp"
 #include "SC_InterfaceTable.h"
@@ -177,6 +180,7 @@ void HardClipADAA::next_aa(int nSamples) {
   }
 
   os.processSamplesDown(outbuf, osBuffer);
+
 }
 
 }  // namespace JSCDSP::HardClipADAA

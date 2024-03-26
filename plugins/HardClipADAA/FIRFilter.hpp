@@ -24,3 +24,4 @@ constexpr double up_taps[FILTER_TAP_NUM] = {
     -0.007134125572070907,  0.006788724784527351,  -0.0064715474097890545,
 }; 
 constexpr double foldScaleCoef = 0.5031597730627207;
+constexpr double upScaleCoef = 1 / foldScaleCoef;
