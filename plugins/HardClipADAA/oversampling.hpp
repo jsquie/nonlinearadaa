@@ -24,6 +24,7 @@ class Oversampling {
   int factor;
   int fScale;
   int nSamples;
+
 };
 
 }  // namespace Oversampling
