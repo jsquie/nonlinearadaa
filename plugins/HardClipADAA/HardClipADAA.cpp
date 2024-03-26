@@ -8,9 +8,7 @@
 #include <cmath>
 #include <memory>
 
-#include "FIRFilter.hpp"
 #include "Li2.hpp"
-#include "OversamplingStage.hpp"
 #include "SC_InterfaceTable.h"
 #include "SC_PlugIn.hpp"
 #include "Utils.hpp"
@@ -102,12 +100,12 @@ namespace JSCDSP::HardClipADAA {
 HardClipADAA::HardClipADAA() {
   // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
+  const int osScale = std::pow(2, osFactor);
   osBuffer = static_cast<double *>(
-      RTAlloc(mWorld, inBufferSize(0) * osFactor * sizeof(double)));
+      RTAlloc(mWorld, inBufferSize(0) * osScale * sizeof(double)));
 
   os.init(osFactor, inBufferSize(0));
 
-  delay = std::shared_ptr<CircularBuffer>(new CircularBuffer(UP_FILTER_TAP_NUM + 1));
   x1 = 0.0;
   x2 = 0.0;
   d2 = 0.0;
@@ -151,25 +149,22 @@ void HardClipADAA::next_aa(int nSamples) {
   float *outbuf = out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
+  double cpyBuf[nSamples]; 
   // up sample -- results are stored in osBuffer
-  os.processSamplesUp(sig, osBuffer);
+  // up sample -- results are stored in osBuffer
+  os.processSamplesUp(sig, cpyBuf, osBuffer);
 
-  // assert(osB.size() == 128);
   // process
   for (auto i = 0; i < nSamples * 2; ++i) {
     if (adlevel == ADAA::AntiDerivativeLevel::First) {
-      delay->data[delay->pos] = osBuffer[i];
-      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
       double curr =
-          ADAA::next_first_adaa(delay->data[delay->pos], x1, ad1_x1, HardClipADAA::clip,
+          ADAA::next_first_adaa(osBuffer[i], x1, ad1_x1, HardClipADAA::clip,
                                 HardClipADAA::hc_first_ad);
       osBuffer[i] = curr;
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
-      delay->data[delay->pos] = osBuffer[i];
-      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
       double curr = ADAA::next_second_adaa(
-          delay->data[delay->pos], x1, x2, ad2_x0, ad2_x1, d2, HardClipADAA::clip,
+          osBuffer[i], x1, x2, ad2_x0, ad2_x1, d2, HardClipADAA::clip,
           HardClipADAA::hc_first_ad, HardClipADAA::hc_second_ad);
       osBuffer[i] = curr;
     }
@@ -185,12 +180,12 @@ namespace JSCDSP::TanhADAA {
 TanhADAA::TanhADAA() {
   // float M = static_cast<float>(M);
   const int osFactor = in0(OverSample);
+  const int osScale = std::pow(2, osFactor);
   osBuffer = static_cast<double *>(
-      RTAlloc(mWorld, inBufferSize(0) * osFactor * sizeof(double)));
+      RTAlloc(mWorld, inBufferSize(0) * osScale * sizeof(double)));
 
   os.init(osFactor, inBufferSize(0));
 
-  delay = std::shared_ptr<CircularBuffer>(new CircularBuffer(UP_FILTER_TAP_NUM + 1));
   x1 = 0.0;
   x2 = 0.0;
   d2 = 0.0;
@@ -226,23 +221,20 @@ void TanhADAA::next_aa(int nSamples) {
   float *outbuf = out(Out1);
   const int adlevel = static_cast<int>(in0(AntiDerivativeLevel));
 
+  double cpyBuf[nSamples]; 
   // up sample -- results are stored in osBuffer
-  os.processSamplesUp(sig, osBuffer);
+  os.processSamplesUp(sig, cpyBuf, osBuffer);
 
   // process
   for (auto i = 0; i < nSamples * 2; ++i) {
     if (adlevel == ADAA::AntiDerivativeLevel::First) {
-      delay->data[delay->pos] = osBuffer[i];
-      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
       double curr = ADAA::next_first_adaa(
-          delay->data[delay->pos], x1, ad1_x1, TanhADAA::tanh, TanhADAA::tanh_first_ad);
+          osBuffer[i], x1, ad1_x1, TanhADAA::tanh, TanhADAA::tanh_first_ad);
       osBuffer[i] = curr;
 
     } else if (adlevel == ADAA::AntiDerivativeLevel::Second) {
-      delay->data[delay->pos] = osBuffer[i];
-      delay->pos = (delay->pos == 0) ? delay->size - 1 : delay->pos - 1;
       double curr = ADAA::next_second_adaa(
-          delay->data[delay->pos], x1, x2, ad2_x0, ad2_x1, d2, TanhADAA::tanh,
+          osBuffer[i], x1, x2, ad2_x0, ad2_x1, d2, TanhADAA::tanh,
           TanhADAA::tanh_first_ad, TanhADAA::tanh_second_ad);
       osBuffer[i] = curr;
     }

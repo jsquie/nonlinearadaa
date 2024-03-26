@@ -53,7 +53,6 @@ class HardClipADAA : public SCUnit {
   double* osBuffer;
   Oversampling::Oversampling os;
 
-  std::shared_ptr<CircularBuffer> delay; 
   double x1{0.0f};
   double ad1_x1{0.0f};
   double x2{0.0f};
@@ -84,8 +83,6 @@ class TanhADAA : public SCUnit {
 
   double* osBuffer;
   Oversampling::Oversampling os;
-
-  std::shared_ptr<CircularBuffer> delay; 
 
   double x1{0.0};
   double ad1_x1{0.0};
