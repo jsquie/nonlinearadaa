@@ -2,7 +2,7 @@
 
 Author: James Squires
 
-A simple hard clipper with anti-derivative anti-aliasing
+Non-linear waveshaper UGens for Supercollider that feature anti-derivative anti-aliasing and variable oversampling. 
 
 ### Requirements
 
@@ -13,8 +13,8 @@ A simple hard clipper with anti-derivative anti-aliasing
 
 Clone the project:
 
-    git clone https://github.com/jsquie/hardclipadaa
-    cd hardclipadaa
+    git clone https://github.com/jsquie/nonlinearadaa
+    cd nonlinearadaa 
     mkdir build
     cd build
 
