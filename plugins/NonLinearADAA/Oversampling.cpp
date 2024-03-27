@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <cmath>
 
 #include "FIRFilter.hpp"
 

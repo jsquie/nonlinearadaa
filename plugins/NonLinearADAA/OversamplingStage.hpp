@@ -7,6 +7,8 @@
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
 #include <TargetConditionals.h>
+#else
+#include <numeric>
 #endif
 
 constexpr double NEG_ONE_DB = 0.8912509381337456;
