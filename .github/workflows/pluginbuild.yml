@@ -26,9 +26,9 @@ jobs:
       SC_PATH: ${{ github.workspace }}/supercollider
       BUILD_PATH: ${{ github.workspace }}/build
       INSTALL_PATH: ${{ github.workspace }}/build/Install
-      ARCHIVE_NAME: HardClipADAA-${{ matrix.name }}.zip
+      ARCHIVE_NAME: NonLinearADAA-${{ matrix.name }}.zip
     steps:
-    - name: Checkout HardClipADAA
+    - name: Checkout NonLinearADAA
       uses: actions/checkout@v3
 
     - name: Checkout SuperCollider
@@ -64,11 +64,11 @@ jobs:
       run: zip -r "$ARCHIVE_NAME" "HardClipADAA"
 
       # Gather all files in a zip
-    - name: Zip up build (Windows)
-      if: runner.os == 'Windows'
-      shell: bash
-      working-directory: ${{ env.INSTALL_PATH }}
-      run: 7z a "$ARCHIVE_NAME" -tzip "HardClipADAA"
+   # - name: Zip up build (Windows)
+   #   if: runner.os == 'Windows'
+   #   shell: bash
+   #   working-directory: ${{ env.INSTALL_PATH }}
+   #   run: 7z a "$ARCHIVE_NAME" -tzip "HardClipADAA"
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
