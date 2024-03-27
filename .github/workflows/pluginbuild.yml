@@ -13,13 +13,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: macOS
-            os: macos-latest
+   #       - name: macOS
+    #        os: macos-latest
 
-#          - name: Linux-x64
-#            os: ubuntu-latest
+          - name: Linux-x64
+            os: ubuntu-latest
 
- #         - name: Windows-x64
+  #        - name: Windows-x64
  #           os: windows-latest
 
     env:
