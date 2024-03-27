@@ -68,12 +68,12 @@ set(NonLinearADAA_cpp_files
     plugins/NonLinearADAA/NonLinearADAA.hpp
     plugins/NonLinearADAA/complex.hpp
     plugins/NonLinearADAA/Li2.cpp
-    plugins/NonLinearADAA/Oversampling.cpp
     plugins/NonLinearADAA/OversamplingStage.hpp
+    plugins/NonLinearADAA/Oversampling.hpp
+    plugins/NonLinearADAA/Oversampling.cpp
     plugins/NonLinearADAA/NonLinearADAA.cpp
     plugins/NonLinearADAA/FIRFilter.hpp
-    plugins/NonLinearADAA/Li2.hpp
-    plugins/NonLinearADAA/Oversampling.hpp
+    plugins/NonLinearADAA/Li2.hpp  
     plugins/NonLinearADAA/Utils.hpp
 )
 set(NonLinearADAA_sc_files
