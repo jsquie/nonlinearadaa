@@ -58,7 +58,7 @@ jobs:
       with:
         repository: supercollider/supercollider
         path: ${{ env.SC_PATH }}
-        ref: release
+        ref: main
 
     - name: Create Build Environment
       shell: bash
