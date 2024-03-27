@@ -1,13 +1,11 @@
 class:: TanhADAA 
-summary:: A simple hyperbolic tangent non-linear waveshaper with anti-derivative
-anti-aliasing and varialble oversampling
-related:: HardClipADAA
+summary:: A htan non-linear shaper with anti-derivative anti-aliasing
 categories:: UGens>NonLinear
 
 description::
 
-A non-linear hyperbolic tangent waveshaper that utilizes first or second order
-anti-derivative anti-aliasing as well as 2x, 4x, 8x, or 16x oversampling. 
+A simple non-linear hyperbolic tangent waveshaper with first or second order anti-derivative anti-aliasing and 2x, 4x, 8x, or 16x
+oversampling. 
 
 
 classmethods::
@@ -17,20 +15,17 @@ method::ar
 argument::input
 
 argument::adLevel
-Order of anti-derivative anti-aliasing (1 = first order, 2 = second order)
+anti-derivative anti-aliasing order (1 for first, 2 for seccond)
 
 argument::overSample
-oversampling factor (1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x). Cannot modulate
-this value.
+oversampling factor: (1 for 2x, 2 for 4x, 3 for 8x, 4 for 16x)
 
 
 examples::
 
 code::
+// hard clip 440 hz sin wave with first order anti-derivative anti-aliasing and
+// 2x oversampling
+{ TanhADAA.ar(SinOsc.ar(440) * 5.0, 1, 1) }.play
 
-// 440 hz sinwave shaped with first order
-// anti-derivative anti-aliasing and 2x
-// oversampling
-{ TanhADAA.ar(SinOsc.ar(440) * 5.0, 1, 1)}.play
-
-:
+::

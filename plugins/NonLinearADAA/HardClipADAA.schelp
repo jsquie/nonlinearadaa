@@ -1,6 +1,5 @@
 class:: HardClipADAA
 summary:: A simple hard clipper with anti-derivative anti-aliasing
-related:: TanhADAA 
 categories:: UGens>NonLinear
 
 description::
