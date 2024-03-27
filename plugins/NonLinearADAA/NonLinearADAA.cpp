@@ -3,12 +3,9 @@
 // James Squires (squires.jr@gmail.com)
 //
 // Adapted from Chow DSP
-#include "HardClipADAA.hpp"
+#include "NonLinearADAA.hpp"
 
-#include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <numeric>
 
 #include "Li2.hpp"
 #include "SC_InterfaceTable.h"
@@ -16,10 +13,6 @@
 #include "Utils.hpp"
 
 static InterfaceTable *ft;
-#define print(x) std::cout << x << ", "
-#define printEln() std::cout << "\n"
-#define printfl() std::cout << "" std::endl
-static unsigned int numCalls = 0;
 
 namespace JSCDSP::ADAA {
 
@@ -180,7 +173,6 @@ void HardClipADAA::next_aa(int nSamples) {
   }
 
   os.processSamplesDown(outbuf, osBuffer);
-
 }
 
 }  // namespace JSCDSP::HardClipADAA
@@ -231,7 +223,6 @@ inline double TanhADAA::tanh_second_ad(const double &v) {
 }
 
 void TanhADAA::next_aa(int nSamples) {
-
   const int osBufferSize = nSamples * fScale;
   // println("Starting a next_aa call");
   const float *sig = in(Input);

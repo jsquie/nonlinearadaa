@@ -1,4 +1,5 @@
 // Copyright 2024 James Squires
+
 #include "Oversampling.hpp"
 
 #include <algorithm>
@@ -6,7 +7,6 @@
 
 #include "FIRFilter.hpp"
 #include "OversamplingStage.hpp"
-
 
 namespace Oversampling {
 

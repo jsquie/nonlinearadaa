@@ -1,4 +1,5 @@
 #pragma once
+
 #include <algorithm>
 #include <memory>
 
@@ -62,8 +63,8 @@ struct OversamplingStage {
 
     vDSP_dotprD(bufData + filter_pos, 1, up_taps, 1, &y0,
                 filter_size - filter_pos);
-    vDSP_dotprD(bufData, 1, up_taps + (filter_size - filter_pos), 1,
-                &y1, filter_pos);
+    vDSP_dotprD(bufData, 1, up_taps + (filter_size - filter_pos), 1, &y1,
+                filter_pos);
 #else
     y0 = std::inner_product(buf->data.get() + filter_pos,
                             buf->data.get() + filter_size, up_taps, 0.0);
@@ -77,7 +78,8 @@ struct OversamplingStage {
   void processUp(const double *input, const int &input_size) {
     for (int n = 0; n < input_size; ++n) {
       data[n << 1] = convolve(input[n]) * upScaleCoef;
-      data[(n << 1) + 1] = delayBuf->delay(input[n] * foldScaleCoef * upScaleCoef);
+      data[(n << 1) + 1] =
+          delayBuf->delay(input[n] * foldScaleCoef * upScaleCoef);
     }
   };
 
