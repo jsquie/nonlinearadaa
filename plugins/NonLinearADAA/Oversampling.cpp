@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "FIRFilter.hpp"
-#include "OversamplingStage.hpp"
 
 namespace Oversampling {
 
