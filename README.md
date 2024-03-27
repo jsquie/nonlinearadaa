@@ -1,8 +1,11 @@
-# HardClipADAA
+# NonLinearADAA
 
 Author: James Squires
 
 Non-linear waveshaper UGens for Supercollider that feature anti-derivative anti-aliasing and variable oversampling. 
+
+- **HardClipADAA**
+- **TanhADAA**
 
 ### Requirements
 
