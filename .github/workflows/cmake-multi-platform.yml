@@ -71,5 +71,6 @@ jobs:
         -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH"
 
     - name: Build
+      working-directory: ${{ env.BUILD_PATH }}
       run: cmake --build . --config "Release" --target install
 
