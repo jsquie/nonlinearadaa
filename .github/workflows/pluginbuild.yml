@@ -14,14 +14,14 @@ jobs:
     strategy:
       matrix:
         include:
-   #       - name: macOS
-    #        os: macos-latest
-
+          - name: macOS-14
+            os: macos-14
+          - name: macOS-13
+            os: macos-13
           - name: Linux-x64
             os: ubuntu-latest
-
-  #        - name: Windows-x64
- #           os: windows-latest
+          - name: Windows-x64
+            os: windows-latest
 
     env:
       SC_PATH: ${{ github.workspace }}/supercollider
@@ -62,14 +62,14 @@ jobs:
       if: runner.os != 'Windows'
       shell: bash
       working-directory: ${{ env.INSTALL_PATH }}
-      run: zip -r "$ARCHIVE_NAME" "HardClipADAA"
+      run: zip -r "$ARCHIVE_NAME" "NonLinearADAA"
 
       # Gather all files in a zip
-   # - name: Zip up build (Windows)
-   #   if: runner.os == 'Windows'
-   #   shell: bash
-   #   working-directory: ${{ env.INSTALL_PATH }}
-   #   run: 7z a "$ARCHIVE_NAME" -tzip "HardClipADAA"
+    - name: Zip up build (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      working-directory: ${{ env.INSTALL_PATH }}
+      run: 7z a "$ARCHIVE_NAME" -tzip "NonLinearADAA"
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
