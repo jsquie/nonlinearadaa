@@ -4,6 +4,12 @@ Author: James Squires
 
 Non-linear waveshaper UGens for Supercollider that feature anti-derivative anti-aliasing and variable oversampling. 
 
+Anti-derivative Anti-aliasing:
+- <http://dafx16.vutbr.cz/dafxpapers/20-DAFx-16_paper_41-PN.pdf>
+Based in part on the work by Jatin Chowhury
+- <https://jatinchowdhury18.medium.com/practical-considerations-for-antiderivative-anti-aliasing-d5847167f510>
+
+
 - **HardClipADAA**
 - **TanhADAA**
 
