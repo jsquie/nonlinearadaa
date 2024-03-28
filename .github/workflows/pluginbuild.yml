@@ -8,15 +8,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}
 #   You may need to uncomment this part if using granular workflows.
-#   permissions:
-#     content: write
+  # permissions:
+    # content: write
     strategy:
       matrix:
         include:
-          - name: macOS-14
-            os: macos-14
+          - name: MacOS-14-arm64
+            os: MacOS-14
           - name: macOS-13
             os: macos-13
+          - name: MacOs-13-arm64
+            os: macos-13-xlarge
           - name: Linux-x64
             os: ubuntu-latest
           - name: Windows-x64
@@ -70,11 +72,11 @@ jobs:
       working-directory: ${{ env.INSTALL_PATH }}
       run: 7z a "$ARCHIVE_NAME" -tzip "NonLinearADAA"
 
-    # - name: Upload binaries to release
-      # uses: svenstaro/upload-release-action@v2
-      # with:
-        # repo_token: ${{ secrets.GITHUB_TOKEN }}
-        # file: ${{ env.INSTALL_PATH }}/${{ env.ARCHIVE_NAME }}
-        # prerelease: true
-        # body: ""
-        # tag: ${{ github.ref }}
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ env.INSTALL_PATH }}/${{ env.ARCHIVE_NAME }}
+        prerelease: true
+        body: ""
+        tag: ${{ github.ref }}
