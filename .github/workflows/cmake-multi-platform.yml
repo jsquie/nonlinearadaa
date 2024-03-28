@@ -72,7 +72,7 @@ jobs:
       shell: bash
       working-directory: ${{ env.BUILD_PATH }}
       run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH="$SC_PATH"
-        -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH"
+        -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH" -DCMAKE_C_COMPILER="clang" -DCMAKE_CXX_COMPILER="clang++"
 
     - name: Build
       working-directory: ${{ env.BUILD_PATH }}
