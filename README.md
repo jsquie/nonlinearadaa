@@ -11,8 +11,15 @@ Based in part on the work by Jatin Chowhury
 - <https://jatinchowdhury18.medium.com/practical-considerations-for-antiderivative-anti-aliasing-d5847167f510>
 
 
+## Contains two Nonlinear processing UGens:
 - **HardClipADAA**
 - **TanhADAA**
+
+### Installation
+
+Either download a [prebuilt binary](https://github.com/jsquie/nonlinearadaa/releases/tag/v0.1.7), unzip the results, and copy into your Supercollider extentions library. 
+
+Or, follow the steps below to clone, compile, and install the project yourself. 
 
 ### Requirements
 
